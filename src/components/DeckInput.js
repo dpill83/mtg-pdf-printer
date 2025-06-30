@@ -98,7 +98,8 @@ const DeckInput = ({ onDeckSubmit, loading }) => {
             className="btn btn-success"
             disabled={loading || !decklist.trim()}
           >
-            {loading ? 'Loading Cards...' : 'Load Cards'}
+            {loading ? (<span className="spinner" role="status" aria-label="Loading">🔄</span>) : null}
+            {loading ? ' Loading Cards...' : 'Load Cards'}
           </button>
           
           <button
@@ -110,6 +111,7 @@ const DeckInput = ({ onDeckSubmit, loading }) => {
             Clear
           </button>
           
+          {/*
           <button
             type="button"
             className="btn"
@@ -127,6 +129,7 @@ const DeckInput = ({ onDeckSubmit, loading }) => {
           >
             Load Full Example
           </button>
+          */}
         </div>
       </form>
     </div>

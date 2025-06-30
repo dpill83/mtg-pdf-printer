@@ -62,7 +62,12 @@ function App() {
     setSuccess('');
 
     try {
-      const pdfBytes = await generatePDF(cards);
+      // Map cards to use proxy for imageUrl
+      const proxiedCards = cards.map(card => ({
+        ...card,
+        imageUrl: `http://localhost:4000/proxy?url=${encodeURIComponent(card.imageUrl)}`
+      }));
+      const pdfBytes = await generatePDF(proxiedCards);
       downloadPDF(pdfBytes, 'mtg-deck.pdf');
       setSuccess('PDF generated and downloaded successfully!');
     } catch (error) {
@@ -99,6 +104,7 @@ function App() {
         <div className="card">
           <DeckInput onDeckSubmit={handleDeckSubmit} loading={loading} />
           
+          {/*
           <div style={{ textAlign: 'center', marginTop: '20px' }}>
             <button
               className="btn btn-secondary"
@@ -108,6 +114,7 @@ function App() {
               Test API Connection
             </button>
           </div>
+          */}
         </div>
 
         {errors.length > 0 && (
