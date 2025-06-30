@@ -1,0 +1,79 @@
+.deck-input-container {
+  margin-bottom: 30px;
+}
+
+.input-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.input-header h2 {
+  color: white;
+  margin-bottom: 8px;
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.input-header p {
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 4px;
+  font-size: 16px;
+}
+
+.format-example {
+  font-size: 14px !important;
+  color: rgba(255, 255, 255, 0.7) !important;
+  font-style: italic;
+}
+
+.textarea-container {
+  margin-bottom: 20px;
+}
+
+.decklist-textarea {
+  width: 100%;
+  padding: 16px;
+  border: 2px solid #e1e5e9;
+  border-radius: 8px;
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  line-height: 1.5;
+  resize: vertical;
+  min-height: 200px;
+  transition: border-color 0.3s ease;
+}
+
+.decklist-textarea:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.decklist-textarea:disabled {
+  background-color: #f8f9fa;
+  color: #6c757d;
+  cursor: not-allowed;
+}
+
+.button-group {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+  .input-header h2 {
+    font-size: 24px;
+  }
+  
+  .button-group {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .button-group .btn {
+    width: 100%;
+    max-width: 300px;
+  }
+} 

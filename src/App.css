@@ -1,0 +1,129 @@
+.App {
+  min-height: 100vh;
+  padding: 20px 0;
+}
+
+.app-header {
+  text-align: center;
+  margin-bottom: 40px;
+  color: white;
+}
+
+.app-header h1 {
+  font-size: 48px;
+  font-weight: 800;
+  margin-bottom: 12px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.app-header p {
+  font-size: 20px;
+  opacity: 0.9;
+  font-weight: 400;
+}
+
+.preview-section {
+  text-align: center;
+}
+
+.preview-section h2 {
+  color: #333;
+  margin-bottom: 24px;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.pdf-actions {
+  margin-top: 30px;
+  padding-top: 30px;
+  border-top: 1px solid #e1e5e9;
+}
+
+.pdf-info {
+  margin-top: 20px;
+  text-align: left;
+  max-width: 400px;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #28a745;
+}
+
+.pdf-info p {
+  margin: 8px 0;
+  color: #495057;
+  font-size: 14px;
+}
+
+.app-footer {
+  margin-top: 60px;
+  padding-top: 30px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  text-align: center;
+}
+
+.footer-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.footer-content p {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 14px;
+  margin: 0;
+}
+
+.coffee-button {
+  opacity: 0.8;
+  transition: opacity 0.3s ease;
+}
+
+.coffee-button:hover {
+  opacity: 1;
+}
+
+.coffee-button img {
+  height: 40px;
+  width: auto;
+  border-radius: 6px;
+}
+
+@media (max-width: 768px) {
+  .app-header h1 {
+    font-size: 36px;
+  }
+  
+  .app-header p {
+    font-size: 18px;
+  }
+  
+  .preview-section h2 {
+    font-size: 20px;
+  }
+  
+  .footer-content {
+    gap: 12px;
+  }
+  
+  .coffee-button img {
+    height: 35px;
+  }
+}
+
+@media (max-width: 480px) {
+  .app-header h1 {
+    font-size: 28px;
+  }
+  
+  .app-header p {
+    font-size: 16px;
+  }
+  
+  .coffee-button img {
+    height: 30px;
+  }
+} 
