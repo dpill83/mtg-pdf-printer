@@ -1,4 +1,4 @@
-import { PDFDocument } from 'pdf-lib';
+import { PDFDocument, rgb } from 'pdf-lib';
 
 // MTGPrint default settings for Letter paper (8.5" x 11") at 300 DPI
 // Letter page: 8.5" x 11" = 2550 x 3300 pixels at 300 DPI
@@ -10,9 +10,8 @@ const DPI = 300;
 const CARD_WIDTH_INCHES = 2.5;
 const CARD_HEIGHT_INCHES = 3.5;
 
-// Convert to points (1 inch = 72 points, 1 inch = 300 pixels at 300 DPI)
+// Convert to points (1 inch = 72 points)
 const POINTS_PER_INCH = 72;
-const PIXELS_PER_INCH = DPI;
 
 // Page dimensions in points
 const PAGE_WIDTH_POINTS = LETTER_WIDTH_INCHES * POINTS_PER_INCH;  // 612pt
@@ -27,12 +26,6 @@ const CARD_HEIGHT_POINTS = CARD_HEIGHT_INCHES * POINTS_PER_INCH; // 252pt
 // Total grid height: 3 cards * 252pt = 756pt
 // Available space: 612pt x 792pt
 // Margins: (612 - 540) / 2 = 36pt horizontal, (792 - 756) / 2 = 18pt vertical
-const MARGIN_X = (PAGE_WIDTH_POINTS - (3 * CARD_WIDTH_POINTS)) / 2;  // 36pt
-const MARGIN_Y = (PAGE_HEIGHT_POINTS - (3 * CARD_HEIGHT_POINTS)) / 2; // 18pt
-
-// No gutter needed since cards are exactly sized to fit 3x3 grid
-const GUTTER_X = 0;
-const GUTTER_Y = 0;
 
 export const generatePDF = async (cards, paper = { width: 8.5, height: 11.0 }, scale = 100, options = {}) => {
   // Use default Letter paper dimensions
@@ -49,6 +42,30 @@ export const generatePDF = async (cards, paper = { width: 8.5, height: 11.0 }, s
   const scaledMarginY = (pageHeight - (3 * cardHeight)) / 2;
 
   const pdfDoc = await PDFDocument.create();
+
+  // Pre-load triangle corner images if black corners are enabled
+  let triangleImages = null;
+  if (options.blackCorners) {
+    try {
+      const triangleUrls = [
+        '/triangle_topleft.png',
+        '/triangle_topright.png',
+        '/triangle_bottomleft.png',
+        '/triangle_bottomright.png'
+      ];
+      
+      triangleImages = await Promise.all(
+        triangleUrls.map(async (url) => {
+          const response = await fetch(url);
+          const arrayBuffer = await response.arrayBuffer();
+          return await pdfDoc.embedPng(new Uint8Array(arrayBuffer));
+        })
+      );
+    } catch (error) {
+      console.error('Failed to load triangle images:', error);
+      triangleImages = null;
+    }
+  }
 
   // Pre-fetch all images as Uint8Array
   const imageBytesArr = await Promise.all(
@@ -99,10 +116,137 @@ export const generatePDF = async (cards, paper = { width: 8.5, height: 11.0 }, s
       }
     }
 
-    // TODO: Add crop marks, cut lines, and watermarks based on options
-    // if (options.cropMarks) { ... }
-    // if (options.cutLines) { ... }
-    // if (options.playtestWatermark) { ... }
+    // Draw black corner triangles above the cards if enabled
+    if (options.blackCorners && triangleImages) {
+      const TRIANGLE_SIZE = 32; // 8px triangle size
+      const TRIANGLE_SIZE_POINTS = TRIANGLE_SIZE * (POINTS_PER_INCH / 300); // Convert to points
+      
+      for (let j = 0; j < pageCards.length; j++) {
+        const row = Math.floor(j / 3);
+        const col = j % 3;
+        
+        // Calculate card position
+        const cardX = scaledMarginX + (col * cardWidth);
+        const cardY = pageHeight - scaledMarginY - cardHeight - (row * cardHeight);
+        
+        // Draw triangle corners at each corner of the card
+        // Top-left corner
+        page.drawImage(triangleImages[0], {
+          x: cardX,
+          y: cardY + cardHeight - TRIANGLE_SIZE_POINTS,
+          width: TRIANGLE_SIZE_POINTS,
+          height: TRIANGLE_SIZE_POINTS,
+        });
+        
+        // Top-right corner
+        page.drawImage(triangleImages[1], {
+          x: cardX + cardWidth - TRIANGLE_SIZE_POINTS + 0.24 - 0.24,
+          y: cardY + cardHeight - TRIANGLE_SIZE_POINTS,
+          width: TRIANGLE_SIZE_POINTS,
+          height: TRIANGLE_SIZE_POINTS,
+        });
+        
+        // Bottom-left corner
+        page.drawImage(triangleImages[2], {
+          x: cardX,
+          y: cardY - 0.24 + 0.24,
+          width: TRIANGLE_SIZE_POINTS,
+          height: TRIANGLE_SIZE_POINTS,
+        });
+        
+        // Bottom-right corner
+        page.drawImage(triangleImages[3], {
+          x: cardX + cardWidth - TRIANGLE_SIZE_POINTS + 0.24 - 0.24,
+          y: cardY - 0.24 + 0.24,
+          width: TRIANGLE_SIZE_POINTS,
+          height: TRIANGLE_SIZE_POINTS,
+        });
+      }
+    }
+
+
+
+    // Add crop marks if enabled
+    if (options.cropMarks) {
+      // Crop mark dimensions: 1/4" long, 0.5pt wide for thinner marks
+      const CROP_MARK_LENGTH = 0.25 * POINTS_PER_INCH; // 18pt (1/4")
+      const CROP_MARK_THICKNESS = 0.5; // 0.5pt wide for thinner crop marks
+      
+      // Draw crop marks for each card on the page
+      for (let j = 0; j < pageCards.length; j++) {
+        const row = Math.floor(j / 3);
+        const col = j % 3;
+        
+        // Calculate card position
+        const cardX = scaledMarginX + (col * cardWidth);
+        const cardY = pageHeight - scaledMarginY - cardHeight - (row * cardHeight);
+        
+        // Calculate crop mark offset for outermost edges
+        const isRightmostCard = col === 2; // Rightmost column (0-indexed)
+        const isBottomCard = row === 2; // Bottom row (0-indexed)
+        const cropMarkOffset = CROP_MARK_THICKNESS - 0.75; // Reduced offset (moved back by ~1 pixel)
+        const rightCropMarkOffset = 0.375; // Additional 0.5 pixel offset for right crop marks
+        
+        // Draw crop marks at each corner of the card
+        // Top-left corner (always standard position)
+        page.drawLine({
+          start: { x: cardX - CROP_MARK_LENGTH, y: cardY + cardHeight },
+          end: { x: cardX, y: cardY + cardHeight },
+          thickness: CROP_MARK_THICKNESS,
+          color: rgb(0.7, 0.7, 0.7)
+        });
+        page.drawLine({
+          start: { x: cardX, y: cardY + cardHeight + CROP_MARK_LENGTH },
+          end: { x: cardX, y: cardY + cardHeight },
+          thickness: CROP_MARK_THICKNESS,
+          color: rgb(0.7, 0.7, 0.7)
+        });
+        
+        // Top-right corner (offset outward if rightmost card)
+        const rightEdgeX = isRightmostCard ? cardX + cardWidth + cropMarkOffset + rightCropMarkOffset : cardX + cardWidth;
+        page.drawLine({
+          start: { x: rightEdgeX, y: cardY + cardHeight },
+          end: { x: rightEdgeX + CROP_MARK_LENGTH, y: cardY + cardHeight },
+          thickness: CROP_MARK_THICKNESS,
+          color: rgb(0.7, 0.7, 0.7)
+        });
+        page.drawLine({
+          start: { x: rightEdgeX, y: cardY + cardHeight + CROP_MARK_LENGTH },
+          end: { x: rightEdgeX, y: cardY + cardHeight },
+          thickness: CROP_MARK_THICKNESS,
+          color: rgb(0.7, 0.7, 0.7)
+        });
+        
+        // Bottom-left corner (offset outward if bottom card)
+        const bottomEdgeY = isBottomCard ? cardY - cropMarkOffset : cardY;
+        page.drawLine({
+          start: { x: cardX - CROP_MARK_LENGTH, y: bottomEdgeY },
+          end: { x: cardX, y: bottomEdgeY },
+          thickness: CROP_MARK_THICKNESS,
+          color: rgb(0.7, 0.7, 0.7)
+        });
+        page.drawLine({
+          start: { x: cardX, y: bottomEdgeY - CROP_MARK_LENGTH },
+          end: { x: cardX, y: bottomEdgeY },
+          thickness: CROP_MARK_THICKNESS,
+          color: rgb(0.7, 0.7, 0.7)
+        });
+        
+        // Bottom-right corner (offset outward if rightmost AND bottom card)
+        page.drawLine({
+          start: { x: rightEdgeX, y: bottomEdgeY },
+          end: { x: rightEdgeX + CROP_MARK_LENGTH, y: bottomEdgeY },
+          thickness: CROP_MARK_THICKNESS,
+          color: rgb(0.7, 0.7, 0.7)
+        });
+        page.drawLine({
+          start: { x: rightEdgeX, y: bottomEdgeY - CROP_MARK_LENGTH },
+          end: { x: rightEdgeX, y: bottomEdgeY },
+          thickness: CROP_MARK_THICKNESS,
+          color: rgb(0.7, 0.7, 0.7)
+        });
+      }
+    }
   }
 
   const pdfBytes = await pdfDoc.save();
