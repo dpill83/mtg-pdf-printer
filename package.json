@@ -2,6 +2,9 @@
   "name": "mtg-pdf-printer",
   "version": "1.0.0",
   "private": true,
+  "engines": {
+    "node": "20.x"
+  },
   "dependencies": {
     "@testing-library/jest-dom": "^5.16.4",
     "@testing-library/react": "^13.3.0",
