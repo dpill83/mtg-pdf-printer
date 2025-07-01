@@ -39,7 +39,12 @@ export default async function handler(req, res) {
     const imageBytesArr = await Promise.all(
       cards.map(async (card) => {
         try {
-          const response = await fetch(card.imageUrl);
+          const response = await fetch(card.imageUrl, {
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (compatible; MTG-PDF-Printer/1.0; +https://yourdomain.com)',
+              'Accept': 'image/png,image/*;q=0.8,*/*;q=0.5'
+            }
+          });
           const arrayBuffer = await response.arrayBuffer();
           return new Uint8Array(arrayBuffer);
         } catch (error) {
