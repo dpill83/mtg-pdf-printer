@@ -27,7 +27,7 @@ const PrintOptions = ({
   cutLines, setCutLines,
   blackCorners, setBlackCorners,
   skipBasicLands, setSkipBasicLands,
-  printChecklist, setPrintChecklist,
+  printDecklist, setPrintDecklist,
   playtestWatermark, setPlaytestWatermark,
   paperSize, setPaperSize,
   scale, setScale,
@@ -42,7 +42,7 @@ const PrintOptions = ({
         <ToggleSwitch checked={cutLines} onChange={setCutLines} label="Cut lines" id="cut-lines" />
         <ToggleSwitch checked={skipBasicLands} onChange={setSkipBasicLands} label="Skip basic lands" id="skip-basic-lands" />
         <ToggleSwitch checked={blackCorners} onChange={setBlackCorners} label="Black corners" id="black-corners" />
-        <ToggleSwitch checked={printChecklist} onChange={setPrintChecklist} label="Print checklist" id="print-checklist" />
+        <ToggleSwitch checked={printDecklist} onChange={setPrintDecklist} label="Print decklist" id="print-checklist" />
         <ToggleSwitch checked={playtestWatermark} onChange={setPlaytestWatermark} label="Playtest watermark" id="playtest-watermark" />
       </div>
       

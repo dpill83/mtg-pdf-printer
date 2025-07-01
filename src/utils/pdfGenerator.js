@@ -1,4 +1,7 @@
-import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
+// Use CommonJS require for server-side compatibility
+const { PDFDocument, rgb, StandardFonts } = require('pdf-lib');
+const fs = require('fs');
+const path = require('path');
 
 // Polyfill fetch for Node.js environment
 if (typeof fetch === 'undefined') {
@@ -33,7 +36,25 @@ const CARD_HEIGHT_POINTS = CARD_HEIGHT_INCHES * POINTS_PER_INCH; // 252pt
 // Available space: 612pt x 792pt
 // Margins: (612 - 540) / 2 = 36pt horizontal, (792 - 756) / 2 = 18pt vertical
 
-export const generatePDF = async (cards, paper = { width: 8.5, height: 11.0, unit: 'in' }, scale = 100, options = {}) => {
+const generatePDF = async (cards, paper = { width: 8.5, height: 11.0, unit: 'in' }, scale = 100, options = {}) => {
+  // 1. Skip basic lands if option is enabled
+  if (options.skipBasicLands) {
+    const basicLands = [
+      'Plains', 'Island', 'Swamp', 'Mountain', 'Forest', 'Wastes'
+    ];
+    cards = cards.filter(card => !basicLands.includes(card.name));
+  }
+
+  // Expand cards array by quantity
+  const expandedCards = [];
+  for (const card of cards) {
+    const qty = card.quantity || 1;
+    for (let i = 0; i < qty; i++) {
+      expandedCards.push(card);
+    }
+  }
+  cards = expandedCards;
+
   // Determine page dimensions in points
   let widthInches, heightInches;
   if (paper.unit === 'cm') {
@@ -51,9 +72,14 @@ export const generatePDF = async (cards, paper = { width: 8.5, height: 11.0, uni
   const cardWidth = CARD_WIDTH_POINTS * scaleFactor;
   const cardHeight = CARD_HEIGHT_POINTS * scaleFactor;
 
+  // Dynamically calculate columns and rows that fit on the page
+  const numCols = Math.floor(pageWidth / cardWidth);
+  const numRows = Math.floor(pageHeight / cardHeight);
+  const cardsPerPage = numCols * numRows;
+
   // Recalculate margins for scaled cards to maintain centering
-  const scaledMarginX = (pageWidth - (3 * cardWidth)) / 2;
-  const scaledMarginY = (pageHeight - (3 * cardHeight)) / 2;
+  const scaledMarginX = (pageWidth - (numCols * cardWidth)) / 2;
+  const scaledMarginY = (pageHeight - (numRows * cardHeight)) / 2;
 
   const pdfDoc = await PDFDocument.create();
 
@@ -61,23 +87,41 @@ export const generatePDF = async (cards, paper = { width: 8.5, height: 11.0, uni
   let triangleImages = null;
   if (options.blackCorners) {
     try {
-      const triangleUrls = [
-        '/triangle_topleft.png',
-        '/triangle_topright.png',
-        '/triangle_bottomleft.png',
-        '/triangle_bottomright.png'
+      console.log('Loading triangle images for black corners...');
+      const triangleFiles = [
+        'triangle_topleft.png',
+        'triangle_topright.png',
+        'triangle_bottomleft.png',
+        'triangle_bottomright.png'
       ];
       
       triangleImages = await Promise.all(
-        triangleUrls.map(async (url) => {
-          const response = await fetch(url);
-          const arrayBuffer = await response.arrayBuffer();
-          return await pdfDoc.embedPng(new Uint8Array(arrayBuffer));
+        triangleFiles.map(async (filename) => {
+          const filePath = path.join(__dirname, '..', '..', 'public', filename);
+          console.log(`Loading triangle image: ${filePath}`);
+          const fileBuffer = fs.readFileSync(filePath);
+          console.log(`Triangle image loaded: ${filename}, size: ${fileBuffer.length} bytes`);
+          return await pdfDoc.embedPng(fileBuffer);
         })
       );
+      console.log(`Successfully loaded ${triangleImages.length} triangle images`);
     } catch (error) {
       console.error('Failed to load triangle images:', error);
       triangleImages = null;
+    }
+  }
+
+  // Pre-load playtest watermark image if enabled
+  let playtestWatermarkImage = null;
+  if (options.playtestWatermark) {
+    try {
+      const watermarkPath = path.join(__dirname, '..', '..', 'public', 'playtest_watermark.png');
+      const watermarkBytes = fs.readFileSync(watermarkPath);
+      playtestWatermarkImage = await pdfDoc.embedPng(watermarkBytes);
+      console.log('Loaded playtest watermark image:', watermarkPath);
+    } catch (error) {
+      console.error('Failed to load playtest watermark image:', error);
+      playtestWatermarkImage = null;
     }
   }
 
@@ -95,13 +139,13 @@ export const generatePDF = async (cards, paper = { width: 8.5, height: 11.0, uni
     })
   );
 
-  // Process cards in groups of 9 (3x3 grid per page)
-  for (let i = 0; i < cards.length; i += 9) {
-    const pageCards = cards.slice(i, i + 9);
-    const pageImages = imageBytesArr.slice(i, i + 9);
+  // Process cards in groups of cardsPerPage (dynamic grid per page)
+  for (let i = 0; i < cards.length; i += cardsPerPage) {
+    const pageCards = cards.slice(i, i + cardsPerPage);
+    const pageImages = imageBytesArr.slice(i, i + cardsPerPage);
     const page = pdfDoc.addPage([pageWidth, pageHeight]);
 
-    // Place cards in 3x3 grid, left-to-right, top-to-bottom
+    // Place cards in grid, left-to-right, top-to-bottom
     for (let j = 0; j < pageCards.length; j++) {
       const imgBytes = pageImages[j];
       if (!imgBytes) continue; // Skip if image failed to load
@@ -110,9 +154,9 @@ export const generatePDF = async (cards, paper = { width: 8.5, height: 11.0, uni
         // Embed image (assume PNG)
         const img = await pdfDoc.embedPng(imgBytes);
         
-        // Calculate grid position (0-2 for row and column)
-        const row = Math.floor(j / 3);
-        const col = j % 3;
+        // Calculate grid position
+        const row = Math.floor(j / numCols);
+        const col = j % numCols;
         
         // Calculate card position (PDF coordinates: bottom-left origin)
         const x = scaledMarginX + (col * cardWidth);
@@ -125,6 +169,24 @@ export const generatePDF = async (cards, paper = { width: 8.5, height: 11.0, uni
           width: cardWidth,
           height: cardHeight,
         });
+
+        // Draw Playtest Card watermark PNG if enabled
+        if (options.playtestWatermark && playtestWatermarkImage) {
+          // Modular watermark config
+          const wmScale = 1.0; // 100% of card width
+          const wmOpacity = 0.5;
+          const wmWidth = cardWidth * wmScale;
+          const wmHeight = (playtestWatermarkImage.height / playtestWatermarkImage.width) * wmWidth;
+          const wmX = x + (cardWidth - wmWidth) / 2;
+          const wmY = y + 4; // 4pt from bottom
+          page.drawImage(playtestWatermarkImage, {
+            x: wmX,
+            y: wmY,
+            width: wmWidth,
+            height: wmHeight,
+            opacity: wmOpacity
+          });
+        }
       } catch (error) {
         console.error(`Failed to embed image for ${pageCards[j].name}:`, error);
       }
@@ -132,16 +194,19 @@ export const generatePDF = async (cards, paper = { width: 8.5, height: 11.0, uni
 
     // Draw black corner triangles above the cards if enabled
     if (options.blackCorners && triangleImages) {
-      const TRIANGLE_SIZE = 32; // 8px triangle size
-      const TRIANGLE_SIZE_POINTS = TRIANGLE_SIZE * (POINTS_PER_INCH / 300); // Convert to points
+      console.log('Drawing black corner triangles...');
+      // Triangle size: 8px = 8/72 = 0.111 inches = 8 points
+      const TRIANGLE_SIZE_POINTS = 8;
       
       for (let j = 0; j < pageCards.length; j++) {
-        const row = Math.floor(j / 3);
-        const col = j % 3;
+        const row = Math.floor(j / numCols);
+        const col = j % numCols;
         
         // Calculate card position
         const cardX = scaledMarginX + (col * cardWidth);
         const cardY = pageHeight - scaledMarginY - cardHeight - (row * cardHeight);
+        
+        console.log(`Drawing triangles for card ${j} at position (${cardX}, ${cardY})`);
         
         // Draw triangle corners at each corner of the card
         // Top-left corner
@@ -154,7 +219,7 @@ export const generatePDF = async (cards, paper = { width: 8.5, height: 11.0, uni
         
         // Top-right corner
         page.drawImage(triangleImages[1], {
-          x: cardX + cardWidth - TRIANGLE_SIZE_POINTS + 0.24 - 0.24,
+          x: cardX + cardWidth - TRIANGLE_SIZE_POINTS,
           y: cardY + cardHeight - TRIANGLE_SIZE_POINTS,
           width: TRIANGLE_SIZE_POINTS,
           height: TRIANGLE_SIZE_POINTS,
@@ -163,19 +228,20 @@ export const generatePDF = async (cards, paper = { width: 8.5, height: 11.0, uni
         // Bottom-left corner
         page.drawImage(triangleImages[2], {
           x: cardX,
-          y: cardY - 0.24 + 0.24,
+          y: cardY,
           width: TRIANGLE_SIZE_POINTS,
           height: TRIANGLE_SIZE_POINTS,
         });
         
         // Bottom-right corner
         page.drawImage(triangleImages[3], {
-          x: cardX + cardWidth - TRIANGLE_SIZE_POINTS + 0.24 - 0.24,
-          y: cardY - 0.24 + 0.24,
+          x: cardX + cardWidth - TRIANGLE_SIZE_POINTS,
+          y: cardY,
           width: TRIANGLE_SIZE_POINTS,
           height: TRIANGLE_SIZE_POINTS,
         });
       }
+      console.log('Finished drawing black corner triangles');
     }
 
     // Add crop marks if enabled
@@ -186,16 +252,16 @@ export const generatePDF = async (cards, paper = { width: 8.5, height: 11.0, uni
       
       // Draw crop marks for each card on the page
       for (let j = 0; j < pageCards.length; j++) {
-        const row = Math.floor(j / 3);
-        const col = j % 3;
+        const row = Math.floor(j / numCols);
+        const col = j % numCols;
         
         // Calculate card position
         const cardX = scaledMarginX + (col * cardWidth);
         const cardY = pageHeight - scaledMarginY - cardHeight - (row * cardHeight);
         
         // Calculate crop mark offset for outermost edges
-        const isRightmostCard = col === 2; // Rightmost column (0-indexed)
-        const isBottomCard = row === 2; // Bottom row (0-indexed)
+        const isRightmostCard = col === numCols - 1;
+        const isBottomCard = row === numRows - 1;
         const cropMarkOffset = CROP_MARK_THICKNESS - 0.75; // Reduced offset (moved back by ~1 pixel)
         const rightCropMarkOffset = 0.375; // Additional 0.5 pixel offset for right crop marks
         
@@ -259,10 +325,35 @@ export const generatePDF = async (cards, paper = { width: 8.5, height: 11.0, uni
         });
       }
     }
+
+    // Add cut lines if enabled
+    if (options.cutLines) {
+      // Draw vertical cut lines between columns
+      for (let col = 1; col < numCols; col++) {
+        const x = scaledMarginX + col * cardWidth;
+        // Draw from top of grid to bottom of grid
+        page.drawLine({
+          start: { x, y: pageHeight - scaledMarginY },
+          end: { x, y: pageHeight - scaledMarginY - numRows * cardHeight },
+          thickness: 0.5,
+          color: rgb(0.7, 0.7, 0.7)
+        });
+      }
+      // Draw horizontal cut lines between rows
+      for (let row = 1; row < numRows; row++) {
+        const y = pageHeight - scaledMarginY - row * cardHeight;
+        page.drawLine({
+          start: { x: scaledMarginX, y },
+          end: { x: scaledMarginX + numCols * cardWidth, y },
+          thickness: 0.5,
+          color: rgb(0.7, 0.7, 0.7)
+        });
+      }
+    }
   }
 
-  // Add checklist page if requested
-  if (options.printChecklist) {
+  // Add decklist page if requested
+  if (options.printDecklist) {
     let checklistPage = pdfDoc.addPage([pageWidth, pageHeight]);
     const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
     const fontSize = 14;
@@ -313,7 +404,7 @@ export const generatePDF = async (cards, paper = { width: 8.5, height: 11.0, uni
   return pdfBytes; // Return bytes instead of Blob for server-side compatibility
 };
 
-export const downloadPDF = (pdfBlob, filename = 'mtg-deck.pdf') => {
+const downloadPDF = (pdfBlob, filename = 'mtg-deck.pdf') => {
   const url = URL.createObjectURL(pdfBlob);
   const link = document.createElement('a');
   link.href = url;
@@ -322,4 +413,13 @@ export const downloadPDF = (pdfBlob, filename = 'mtg-deck.pdf') => {
   link.click();
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
-}; 
+};
+
+// CommonJS exports for server-side usage
+module.exports = { generatePDF, downloadPDF };
+
+// ES6 exports for client-side usage (if needed)
+if (typeof exports !== 'undefined') {
+  exports.generatePDF = generatePDF;
+  exports.downloadPDF = downloadPDF;
+} 

@@ -16,7 +16,7 @@ function App() {
   const [cutLines, setCutLines] = useState(false);
   const [blackCorners, setBlackCorners] = useState(true);
   const [skipBasicLands, setSkipBasicLands] = useState(false);
-  const [printChecklist, setPrintChecklist] = useState(false);
+  const [printDecklist, setPrintDecklist] = useState(false);
   const [playtestWatermark, setPlaytestWatermark] = useState(false);
   const [paperSize, setPaperSize] = useState('letter');
   const [scale, setScale] = useState('100');
@@ -142,7 +142,7 @@ function App() {
             cutLines,
             blackCorners,
             skipBasicLands,
-            printChecklist,
+            printDecklist,
             playtestWatermark
           }
         })
@@ -228,8 +228,8 @@ function App() {
             setBlackCorners={setBlackCorners}
             skipBasicLands={skipBasicLands}
             setSkipBasicLands={setSkipBasicLands}
-            printChecklist={printChecklist}
-            setPrintChecklist={setPrintChecklist}
+                          printDecklist={printDecklist}
+              setPrintDecklist={setPrintDecklist}
             playtestWatermark={playtestWatermark}
             setPlaytestWatermark={setPlaytestWatermark}
             paperSize={paperSize}
