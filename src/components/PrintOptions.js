@@ -1,9 +1,5 @@
 import React from 'react';
 
-const paperSizes = [
-  { label: 'Letter (8.5x11.0 in)', value: 'letter' },
-  { label: 'A4 (210x297 mm)', value: 'a4' },
-];
 const scales = [
   { label: '100%', value: '100' },
   { label: '95%', value: '95' },
@@ -35,7 +31,8 @@ const PrintOptions = ({
   playtestWatermark, setPlaytestWatermark,
   paperSize, setPaperSize,
   scale, setScale,
-  onPrint, printing 
+  onPrint, printing,
+  paperSizes
 }) => {
   return (
     <div className="bg-white rounded-lg shadow p-6 mt-6 flex flex-col space-y-6 w-full">

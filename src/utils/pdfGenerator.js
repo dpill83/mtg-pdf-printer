@@ -1,4 +1,4 @@
-import { PDFDocument, rgb } from 'pdf-lib';
+import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 
 // MTGPrint default settings for Letter paper (8.5" x 11") at 300 DPI
 // Letter page: 8.5" x 11" = 2550 x 3300 pixels at 300 DPI
@@ -27,10 +27,18 @@ const CARD_HEIGHT_POINTS = CARD_HEIGHT_INCHES * POINTS_PER_INCH; // 252pt
 // Available space: 612pt x 792pt
 // Margins: (612 - 540) / 2 = 36pt horizontal, (792 - 756) / 2 = 18pt vertical
 
-export const generatePDF = async (cards, paper = { width: 8.5, height: 11.0 }, scale = 100, options = {}) => {
-  // Use default Letter paper dimensions
-  const pageWidth = PAGE_WIDTH_POINTS;
-  const pageHeight = PAGE_HEIGHT_POINTS;
+export const generatePDF = async (cards, paper = { width: 8.5, height: 11.0, unit: 'in' }, scale = 100, options = {}) => {
+  // Determine page dimensions in points
+  let widthInches, heightInches;
+  if (paper.unit === 'cm') {
+    widthInches = paper.width / 2.54;
+    heightInches = paper.height / 2.54;
+  } else {
+    widthInches = paper.width;
+    heightInches = paper.height;
+  }
+  const pageWidth = widthInches * POINTS_PER_INCH;
+  const pageHeight = heightInches * POINTS_PER_INCH;
 
   // Apply scale factor (90-110% range)
   const scaleFactor = Math.max(90, Math.min(Number(scale), 110)) / 100;
@@ -164,8 +172,6 @@ export const generatePDF = async (cards, paper = { width: 8.5, height: 11.0 }, s
       }
     }
 
-
-
     // Add crop marks if enabled
     if (options.cropMarks) {
       // Crop mark dimensions: 1/4" long, 0.5pt wide for thinner marks
@@ -247,6 +253,54 @@ export const generatePDF = async (cards, paper = { width: 8.5, height: 11.0 }, s
         });
       }
     }
+  }
+
+  // Add checklist page if requested
+  if (options.printChecklist) {
+    let checklistPage = pdfDoc.addPage([pageWidth, pageHeight]);
+    const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+    const fontSize = 14;
+    const margin = 40;
+    let y = pageHeight - margin;
+    const lineHeight = fontSize + 4;
+    checklistPage.drawText('Checklist', {
+      x: margin,
+      y,
+      size: fontSize + 4,
+      font,
+      color: rgb(0, 0, 0),
+    });
+    y -= lineHeight * 2;
+    const sanitize = (str) => {
+      // Replace characters outside basic Latin and Latin-1 Supplement with '?'
+      return str.replace(/[^\x00-\xFF]/g, '?');
+    };
+    cards.forEach(card => {
+      const setCode = card.setCode || (card.printings && card.printings[0]?.set_name) || '';
+      const collectorNumber = card.collectorNumber || (card.printings && card.printings[0]?.collector_number) || '';
+      const line = `${card.quantity} ${card.name} (${setCode}) ${collectorNumber}`;
+      const safeLine = sanitize(line);
+      if (y < margin) {
+        y = pageHeight - margin;
+        checklistPage = pdfDoc.addPage([pageWidth, pageHeight]);
+        checklistPage.drawText('Checklist (cont.)', {
+          x: margin,
+          y,
+          size: fontSize + 4,
+          font,
+          color: rgb(0, 0, 0),
+        });
+        y -= lineHeight * 2;
+      }
+      checklistPage.drawText(safeLine, {
+        x: margin,
+        y,
+        size: fontSize,
+        font,
+        color: rgb(0, 0, 0),
+      });
+      y -= lineHeight;
+    });
   }
 
   const pdfBytes = await pdfDoc.save();

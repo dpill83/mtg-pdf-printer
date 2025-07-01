@@ -22,15 +22,17 @@ function App() {
   const [paperSize, setPaperSize] = useState('letter');
   const [scale, setScale] = useState('100');
 
-
-
-  // Paper size options
+  // Paper size options (expanded and unified)
   const paperSizes = [
-    { value: 'letter', label: 'Letter (8.5x11.0 in)', width: 8.5, height: 11.0 },
-    { value: 'legal', label: 'Legal (8.5x14.0 in)', width: 8.5, height: 14.0 },
-    { value: 'a4', label: 'A4 (8.27x11.69 in)', width: 8.27, height: 11.69 },
-    { value: 'a3', label: 'A3 (11.69x16.54 in)', width: 11.69, height: 16.54 },
-    { value: 'tabloid', label: 'Tabloid (11x17 in)', width: 11, height: 17 },
+    { value: 'a4', label: 'A4 (21.0x29.7 cm)', width: 21.0, height: 29.7, unit: 'cm' },
+    { value: 'a3', label: 'A3 (42.0x29.7 cm)', width: 42.0, height: 29.7, unit: 'cm' },
+    { value: 'letter', label: 'Letter (8.5x11.0 in)', width: 8.5, height: 11.0, unit: 'in' },
+    { value: 'legal', label: 'Legal (14.0x8.5 in)', width: 14.0, height: 8.5, unit: 'in' },
+    { value: 'archA', label: 'Arch A (9.0x12.0 in)', width: 9.0, height: 12.0, unit: 'in' },
+    { value: 'archB', label: 'Arch B (18.0x12.0 in)', width: 18.0, height: 12.0, unit: 'in' },
+    { value: 'superB', label: 'Super B (13.0x19.0 in)', width: 13.0, height: 19.0, unit: 'in' },
+    { value: 'tabloid', label: 'Tabloid (11.0x17.0 in)', width: 11.0, height: 17.0, unit: 'in' },
+    { value: '4r', label: '4R (10.2x15.2 cm)', width: 10.2, height: 15.2, unit: 'cm' },
   ];
 
   const handleDeckSubmit = async (decklistText) => {
@@ -128,18 +130,34 @@ function App() {
     setGeneratingPDF(true);
     setErrors([]);
     try {
-      // Find the selected paper size object
       const paper = paperSizes.find(p => p.value === paperSize) || paperSizes[0];
-      // Pass paper size, scale, and print options to generatePDF
-      const pdfBytes = await generatePDF(cards, paper, Number(scale), {
-        cropMarks,
-        cutLines,
-        blackCorners,
-        skipBasicLands,
-        printChecklist,
-        playtestWatermark
+      const response = await fetch('/api/generate-pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          cards,
+          paper,
+          scale: Number(scale),
+          options: {
+            cropMarks,
+            cutLines,
+            blackCorners,
+            skipBasicLands,
+            printChecklist,
+            playtestWatermark
+          }
+        })
       });
-      downloadPDF(pdfBytes, 'mtg-deck.pdf');
+      if (!response.ok) throw new Error('Failed to generate PDF');
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'mtg-deck.pdf';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
     } catch (error) {
       setErrors([`Error generating PDF: ${error.message}`]);
     } finally {
@@ -193,6 +211,7 @@ function App() {
             setScale={setScale}
             onPrint={handleGeneratePDF}
             printing={generatingPDF}
+            paperSizes={paperSizes}
           />
         </div>
 
@@ -206,8 +225,6 @@ function App() {
             </div>
           </div>
         )}
-
-
 
         {cards.length > 0 && (
           <div className="card">
