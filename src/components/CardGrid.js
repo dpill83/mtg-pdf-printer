@@ -50,9 +50,12 @@ const CardGrid = ({ cards, loading, onSelectPrinting, onPrint, printing }) => {
                   src={card.imageUrl}
                   alt={card.name}
                   className="card-image"
-                  onError={() => handleImgError(index)}
+                  onError={(e) => {
+                    console.error(`Failed to load image for ${card.name}:`, card.imageUrl, e);
+                    handleImgError(index);
+                  }}
                   onLoad={() => {
-                    console.log(`Successfully loaded image for ${card.name}`);
+                    console.log(`Successfully loaded image for ${card.name}:`, card.imageUrl);
                   }}
                 />
               ) : (

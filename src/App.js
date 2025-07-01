@@ -82,16 +82,18 @@ function App() {
         return cardWithPrintings;
       }));
 
-      // Proxy the image URLs for the selected printing
-      const proxiedCards = cardsWithPrintings.map(card => {
+      // Use direct Scryfall URLs
+      const finalCards = cardsWithPrintings.map(card => {
         const selected = card.printings.find(p => p.id === card.selectedPrintingId) || card.printings[0];
+        const imageUrl = selected && selected.imageUrl ? selected.imageUrl : card.imageUrl;
+        
         return {
           ...card,
-          imageUrl: selected && selected.imageUrl ? `http://localhost:4000/proxy?url=${encodeURIComponent(selected.imageUrl)}` : card.imageUrl,
+          imageUrl: imageUrl,
         };
       });
 
-      setCards(proxiedCards);
+      setCards(finalCards);
 
       if (fetchErrors.length > 0) {
         setErrors(fetchErrors);
@@ -108,12 +110,12 @@ function App() {
     setCards(prevCards => prevCards.map((card, idx) => {
       if (idx !== cardIdx) return card;
       const selected = card.printings.find(p => p.id === printingId) || card.printings[0];
+      const imageUrl = selected && selected.imageUrl ? selected.imageUrl : card.imageUrl;
+      
       return {
         ...card,
         selectedPrintingId: selected.id,
-        imageUrl: selected && selected.imageUrl
-          ? `http://localhost:4000/proxy?url=${encodeURIComponent(selected.imageUrl)}`
-          : card.imageUrl,
+        imageUrl: imageUrl,
       };
     }));
   };
