@@ -4,10 +4,18 @@
 
 .card-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, 220px);
   gap: 16px;
-  max-width: 600px;
+  max-width: 700px;
   margin: 0 auto;
+}
+
+.card-item-wrapper {
+  width: 220px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* No overflow: hidden here */
 }
 
 .card-item {
@@ -17,6 +25,8 @@
   overflow: hidden;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   transition: transform 0.2s ease;
+  width: 100%;
+  background: white;
 }
 
 .card-item:hover {
@@ -46,6 +56,33 @@
   font-weight: 600;
   color: #666;
   border-radius: 8px;
+}
+
+.card-controls {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  margin-top: 8px;
+}
+
+.card-version-dropdown {
+  flex: 1 1 auto;
+  max-width: 150px;
+}
+
+.card-quantity-badge {
+  margin-right: 8px;
+  color: #333;
+  background: #e5e7eb;
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: 0.95em;
+  font-weight: 600;
+  min-width: 24px;
+  text-align: center;
+  border: 1px solid #d1d5db;
 }
 
 .remaining-cards {
@@ -88,14 +125,15 @@
 
 @media (max-width: 768px) {
   .card-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, 220px);
     gap: 12px;
+    max-width: 480px;
   }
 }
 
 @media (max-width: 480px) {
   .card-grid {
     grid-template-columns: 1fr;
-    max-width: 200px;
+    max-width: 220px;
   }
 } 

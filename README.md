@@ -25,12 +25,21 @@ cd mtg-pdf-printer
 npm install
 ```
 
-3. Start the development server:
+3. Start the development server and proxy server:
 ```bash
-npm start
+npm run dev
 ```
 
-The application will open in your browser at `http://localhost:3000`.
+This will start both the React development server and the proxy server needed for card images. The application will open in your browser at `http://localhost:3000`.
+
+Alternatively, you can run them separately:
+```bash
+# Terminal 1: Start the proxy server
+npm run proxy
+
+# Terminal 2: Start the React development server
+npm start
+```
 
 ## Usage
 
@@ -72,6 +81,7 @@ Examples:
 - **React**: Frontend framework
 - **pdf-lib**: Client-side PDF generation
 - **Axios**: HTTP client for API calls
+- **Express**: Proxy server for card images (avoids CORS issues)
 - **Scryfall API**: Magic: The Gathering card database
 
 ## API Usage
@@ -100,7 +110,9 @@ src/
 
 ### Available Scripts
 
-- `npm start`: Start development server
+- `npm start`: Start React development server
+- `npm run dev`: Start both React development server and proxy server
+- `npm run proxy`: Start proxy server for card images
 - `npm build`: Build for production
 - `npm test`: Run tests
 - `npm eject`: Eject from Create React App

@@ -22,46 +22,6 @@ const DeckInput = ({ onDeckSubmit, loading }) => {
     setErrors([]);
   };
 
-  const handleExample = () => {
-    const exampleDeck = `4x Lightning Bolt (M11) 146
-4x Counterspell (M10) 58
-4x Brainstorm (C21) 85
-4x Ponder (M12) 74
-4x Preordain (M11) 66
-4x Delver of Secrets (ISD) 51
-4x Snapcaster Mage (ISD) 74
-4x Young Pyromancer (M14) 172
-4x Monastery Swiftspear (KTK) 134
-4x Eidolon of the Great Revel (BNG) 100
-4x Sulfuric Vortex (SCG) 95
-4x Price of Progress (EXO) 127
-4x Fireblast (VIS) 123
-4x Chain Lightning (LEG) 95
-4x Lava Spike (CHK) 175
-4x Rift Bolt (TSP) 165
-4x Searing Blaze (ROE) 136
-4x Smash to Smithereens (M10) 150
-4x Pyroblast (ICE) 108
-4x Red Elemental Blast (3ED) 127`;
-    
-    setDecklist(exampleDeck);
-  };
-
-  const handleSimpleExample = () => {
-    const simpleDeck = `4x Lightning Bolt
-4x Counterspell
-4x Brainstorm
-4x Ponder
-4x Preordain
-4x Delver of Secrets
-4x Snapcaster Mage
-4x Young Pyromancer
-4x Monastery Swiftspear
-4x Eidolon of the Great Revel`;
-    
-    setDecklist(simpleDeck);
-  };
-
   return (
     <div className="deck-input-container">
       <form onSubmit={handleSubmit}>
@@ -98,8 +58,9 @@ const DeckInput = ({ onDeckSubmit, loading }) => {
             className="btn btn-success"
             disabled={loading || !decklist.trim()}
           >
-            {loading ? (<span className="spinner" role="status" aria-label="Loading">🔄</span>) : null}
-            {loading ? ' Loading Cards...' : 'Load Cards'}
+            {loading ? (
+              <span className="spinner" aria-label="Loading"></span>
+            ) : 'Load Cards'}
           </button>
           
           <button
@@ -110,26 +71,8 @@ const DeckInput = ({ onDeckSubmit, loading }) => {
           >
             Clear
           </button>
-          
-          {/*
-          <button
-            type="button"
-            className="btn"
-            onClick={handleSimpleExample}
-            disabled={loading}
-          >
-            Load Simple Example
-          </button>
-          
-          <button
-            type="button"
-            className="btn"
-            onClick={handleExample}
-            disabled={loading}
-          >
-            Load Full Example
-          </button>
-          */}
+
+
         </div>
       </form>
     </div>
