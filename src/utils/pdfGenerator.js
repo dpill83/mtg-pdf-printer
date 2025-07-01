@@ -1,5 +1,11 @@
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 
+// Polyfill fetch for Node.js environment
+if (typeof fetch === 'undefined') {
+  const nodeFetch = require('node-fetch');
+  global.fetch = nodeFetch;
+}
+
 // MTGPrint default settings for Letter paper (8.5" x 11") at 300 DPI
 // Letter page: 8.5" x 11" = 2550 x 3300 pixels at 300 DPI
 const LETTER_WIDTH_INCHES = 8.5;
@@ -304,7 +310,7 @@ export const generatePDF = async (cards, paper = { width: 8.5, height: 11.0, uni
   }
 
   const pdfBytes = await pdfDoc.save();
-  return new Blob([pdfBytes], { type: 'application/pdf' });
+  return pdfBytes; // Return bytes instead of Blob for server-side compatibility
 };
 
 export const downloadPDF = (pdfBlob, filename = 'mtg-deck.pdf') => {

@@ -3,7 +3,6 @@ import DeckInput from './components/DeckInput';
 import CardGrid from './components/CardGrid';
 import PrintOptions from './components/PrintOptions';
 import { parseDecklist, fetchMultipleCards, fetchAllPrintings } from './utils/scryfall';
-import { generatePDF, downloadPDF } from './utils/pdfGenerator';
 import './App.css';
 
 function App() {
@@ -165,12 +164,37 @@ function App() {
     }
   };
 
+  // Spinner component for PDF generation
+  function Spinner() {
+    return (
+      <div style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        margin: '24px 0'
+      }}>
+        <div className="spinner" style={{
+          width: 32,
+          height: 32,
+          border: '4px solid #e0e0e0',
+          borderTop: '4px solid #764ba2',
+          borderRadius: '50%',
+          animation: 'spin 1s linear infinite'
+        }} />
+        <div style={{ marginTop: 12, fontSize: 18, color: '#764ba2', fontWeight: 600 }}>
+          Generating PDF...
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="App">
       {/* Top header bar */}
       <div className="bg-white shadow-sm border-b border-gray-200">
         <div className="container mx-auto px-4 py-3 flex justify-between items-center">
-          <div className="text-xl font-bold text-gray-900">MTG PDF PRINTER</div>
+          <div className="text-xl font-bold text-gray-900">mtgtopdf.com</div>
           <div className="flex space-x-6">
             <a href="#" className="text-gray-600 hover:text-gray-900 font-medium">About</a>
             <a href="#" className="text-gray-600 hover:text-gray-900 font-medium">FAQ</a>
@@ -181,9 +205,12 @@ function App() {
       
       <div className="container">
         <header className="app-header">
-          <h1>MTG PDF Printer</h1>
+          <h1>mtgtopdf.com</h1>
           <p>Generate print-ready PDFs from Magic: The Gathering decklists</p>
         </header>
+
+        {/* Show spinner above print options if generating PDF */}
+        {generatingPDF && <Spinner />}
 
         <div className="card">
           <DeckInput
@@ -237,7 +264,7 @@ function App() {
 
         <footer className="app-footer">
           <div className="footer-content">
-            <p>&copy; 2024 MTG PDF Printer. Made with ❤️ for Magic players.</p>
+            <p>&copy; 2024 mtgtopdf.com. Made with ❤️ for Magic players.</p>
             <div className="coffee-button">
               <a href="https://www.buymeacoffee.com/gOZTM9e" target="_blank" rel="noopener noreferrer">
                 <img 

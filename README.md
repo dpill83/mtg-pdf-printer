@@ -1,4 +1,4 @@
-# MTG PDF Printer
+# mtgtopdf.com
 
 A React web application that generates print-ready PDFs from Magic: The Gathering decklists. The app fetches high-resolution card images from the Scryfall API and creates PDFs with 9 cards per page in a 3x3 grid layout.
 
@@ -120,4 +120,11 @@ This project is open source and available under the MIT License.
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request. 
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## Local Development
+
+To run locally, use `vercel dev` for full-stack (React frontend + API routes), or `npm start` for frontend-only.
+
+- `vercel dev`: Runs both the React frontend and serverless API routes (e.g., /api/generate-pdf) locally. This is required for full functionality.
+- `npm start`: Runs only the React frontend. API routes will not be available locally. 
