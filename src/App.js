@@ -20,6 +20,9 @@ function App() {
   const [playtestWatermark, setPlaytestWatermark] = useState(false);
   const [paperSize, setPaperSize] = useState('letter');
   const [scale, setScale] = useState('100');
+  const [aboutOpen, setAboutOpen] = useState(false);
+  const [faqOpen, setFaqOpen] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
 
   // Paper size options (expanded and unified)
   const paperSizes = [
@@ -191,21 +194,123 @@ function App() {
 
   return (
     <div className="App">
+      {/* About Modal */}
+      {aboutOpen && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
+          background: 'rgba(0,0,0,0.4)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center'
+        }}>
+          <div style={{ background: 'white', borderRadius: 8, maxWidth: 480, width: '90%', padding: 32, boxShadow: '0 4px 32px rgba(0,0,0,0.2)', position: 'relative' }}>
+            <button onClick={() => setAboutOpen(false)} style={{ position: 'absolute', top: 12, right: 16, fontSize: 22, background: 'none', border: 'none', cursor: 'pointer', color: '#888' }} aria-label="Close">×</button>
+            <h2 style={{ fontWeight: 700, fontSize: 24, marginBottom: 16 }}>About MTGtoPDF</h2>
+            <div style={{ fontSize: 16, color: '#333', lineHeight: 1.6 }}>
+              <p>MTGtoPDF is a free web tool for generating printable Magic: The Gathering decks as PDFs.<br/>It was inspired by <a href="https://mtgprint.cardtrader.com/" target="_blank" rel="noopener noreferrer">MTG Print</a>, a great service offered by CardTrader.</p>
+              <p style={{ marginTop: 12 }}>This site exists because I wanted a similar tool without the CardTrader branding baked into the output. I'm not trying to rip off MTG Print — just needed a clean, simple solution for myself and figured others might appreciate it too.</p>
+              <p style={{ marginTop: 12 }}>The interface is intentionally familiar so friends and playgroups don't have to relearn how to print proxies. That said, we're not affiliated with MTG Print, CardTrader, Wizards of the Coast, or Hasbro in any way.</p>
+              <p style={{ marginTop: 12 }}>This is a personal project made with love for the MTG community. Use it responsibly, playtest ethically, and support the game however you can.</p>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* FAQ Modal */}
+      {faqOpen && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
+          background: 'rgba(0,0,0,0.4)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center'
+        }}>
+          <div style={{ background: 'white', borderRadius: 8, maxWidth: 540, width: '95%', maxHeight: '90vh', padding: 32, boxShadow: '0 4px 32px rgba(0,0,0,0.2)', position: 'relative', overflowY: 'auto' }}>
+            <button onClick={() => setFaqOpen(false)} style={{ position: 'absolute', top: 12, right: 16, fontSize: 22, background: 'none', border: 'none', cursor: 'pointer', color: '#888' }} aria-label="Close">×</button>
+            <h2 style={{ fontWeight: 700, fontSize: 24, marginBottom: 16 }}>❓ Frequently Asked Questions</h2>
+            <div style={{ fontSize: 16, color: '#333', lineHeight: 1.7 }}>
+              <b>🖨 Some cards are getting cut off when I print the PDF.</b>
+              <div>That's usually a paper size mismatch. If you're printing on Letter but the PDF is set to A4 (or vice versa), the bottom row might get trimmed. Make sure your paper size matches in both the app and your printer settings.</div>
+              <br/>
+              <b>📏 The cards are printing smaller than real Magic cards.</b>
+              <div>This means your print settings are scaling the page. Make sure the scale is set to <b>100%</b> or <b>"Actual Size"</b>. Avoid options like "Fit to Page" or "Shrink to Printable Area" — those will mess with sizing.</div>
+              <br/>
+              <b>🖼 The image quality looks pixelated or blurry.</b>
+              <div>Some card images (especially older or obscure ones) are only available in low resolution. For newer cards, image quality usually improves after a few days as higher-res versions become available. We're constantly updating.</div>
+              <br/>
+              <b>🃏 How do I print split cards like "Expansion // Explosion"?</b>
+              <div>Just type the full name with the double slash, like: <code>Expansion // Explosion</code>.</div>
+              <br/>
+              <b>🌗 How do I print double-faced cards like "Daybreak Ranger"?</b>
+              <div>Enter either <code>Daybreak Ranger</code> or <code>Daybreak Ranger // Nightfall Predator</code>. You'll only see the front in the preview, but the PDF will include both sides. At this time, there's no option to print just one side.</div>
+              <br/>
+              <b>🪙 Can I print tokens and emblems?</b>
+              <div>Yes. Type the name of the token or emblem — like <code>Shark</code> or <code>Chandra, Awakened Inferno Emblem</code>.</div>
+              <br/>
+              <b>🎴 Can I print card backs?</b>
+              <div>Yep. Just type <code>back</code>.</div>
+              <br/>
+              <b>📚 Can I print a full set?</b>
+              <div>Yes, type the set code like <code>eld</code> for Throne of Eldraine. Keep in mind that large sets may take a while to generate.</div>
+              <hr style={{ margin: '24px 0' }}/>
+              <h3 style={{ fontWeight: 700, fontSize: 20, marginBottom: 8 }}>🧰 Feature Options</h3>
+              <ul style={{ paddingLeft: 18, marginBottom: 0 }}>
+                <li><b>🔲 Crop Marks</b><br/>Adds small marks at the corners of each card to guide your cuts.</li>
+                <li style={{ marginTop: 10 }}><b>🔳 Cut Lines</b><br/>Draws lines between cards to help with trimming.</li>
+                <li style={{ marginTop: 10 }}><b>🌿 Skip Basic Lands</b><br/>Removes all basic lands from your list. Great for saving space.</li>
+                <li style={{ marginTop: 10 }}><b>⬛ Black Corners</b><br/>Adds black square corners to your cards. Only use this if you're printing black-bordered cards.</li>
+                <li style={{ marginTop: 10 }}><b>📄 Print Decklist</b><br/>Adds a list of all cards at the end of the PDF — handy for keeping track.</li>
+                <li style={{ marginTop: 10 }}><b>🔒 Playtest Watermark</b><br/>Adds a faint "Playtest Card" watermark to the cards. This helps keep things legit. Wizards of the Coast allows proxies for casual play as long as they're clearly marked.</li>
+              </ul>
+              <hr style={{ margin: '24px 0' }}/>
+              <h3 style={{ fontWeight: 700, fontSize: 20, marginBottom: 8 }}>📱 Installing the App</h3>
+              <b>Can I install mtg-pdf-printer like an app?</b>
+              <div>Yes — it's a Progressive Web App (PWA).</div>
+              <ul style={{ paddingLeft: 18 }}>
+                <li>On <b>desktop</b>, click the install icon in your browser's address bar.</li>
+                <li>On <b>iOS</b>, open in Safari, tap Share, then "Add to Home Screen".</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Send Feedback Modal */}
+      {feedbackOpen && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
+          background: 'rgba(0,0,0,0.4)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center'
+        }}>
+          <div style={{
+            background: 'white', borderRadius: 8, maxWidth: 480, width: '90%', padding: 32,
+            boxShadow: '0 4px 32px rgba(0,0,0,0.2)', position: 'relative', textAlign: 'center'
+          }}>
+            <button onClick={() => setFeedbackOpen(false)} style={{
+              position: 'absolute', top: 12, right: 16, fontSize: 22,
+              background: 'none', border: 'none', cursor: 'pointer', color: '#888'
+            }} aria-label="Close">×</button>
+
+            <h2 style={{ fontWeight: 700, fontSize: 24, marginBottom: 16 }}>Send Feedback</h2>
+
+            <a href="mailto:feedback@mtgtopdf.com" style={{
+              fontSize: 20, fontWeight: 'bold', color: '#3366cc', textDecoration: 'none', wordBreak: 'break-word'
+            }}>
+              feedback@mtgtopdf.com
+            </a>
+
+            <p style={{ fontSize: 14, color: '#777', marginTop: 24 }}><center>
+            <a href="https://www.buymeacoffee.com/gOZTM9e"><img src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=&slug=gOZTM9e&button_colour=FFDD00&font_colour=000000&font_family=Cookie&outline_colour=000000&coffee_colour=ffffff" /></a>
+            </center></p>
+          </div>
+        </div>
+      )}
       {/* Top header bar */}
       <div className="bg-white shadow-sm border-b border-gray-200">
         <div className="container mx-auto px-4 py-3 flex justify-between items-center">
-          <div className="text-xl font-bold text-gray-900">mtgtopdf.com</div>
+          <div className="text-xl font-bold text-gray-900">MTGtoPDF</div>
           <div className="flex space-x-6">
-            <a href="#" className="text-gray-600 hover:text-gray-900 font-medium">About</a>
-            <a href="#" className="text-gray-600 hover:text-gray-900 font-medium">FAQ</a>
-            <a href="#" className="text-gray-600 hover:text-gray-900 font-medium">Send feedback</a>
+            <a href="#" className="text-gray-600 hover:text-gray-900 font-medium" onClick={e => { e.preventDefault(); setAboutOpen(true); }}>About</a>
+            <a href="#" className="text-gray-600 hover:text-gray-900 font-medium" onClick={e => { e.preventDefault(); setFaqOpen(true); }}>FAQ</a>
+            <a href="#" className="text-gray-600 hover:text-gray-900 font-medium" onClick={e => { e.preventDefault(); setFeedbackOpen(true); }}>Send feedback</a>
           </div>
         </div>
       </div>
       
       <div className="container">
         <header className="app-header">
-          <h1>mtgtopdf.com</h1>
+          <h1>MTGtoPDF</h1>
           <p>Generate print-ready PDFs from Magic: The Gathering decklists</p>
         </header>
 
@@ -217,29 +322,30 @@ function App() {
             onDeckSubmit={handleDeckSubmit}
             loading={loading}
           />
-          
-          {/* PrintOptions component - single source of truth for all print controls */}
-          <PrintOptions
-            cropMarks={cropMarks}
-            setCropMarks={setCropMarks}
-            cutLines={cutLines}
-            setCutLines={setCutLines}
-            blackCorners={blackCorners}
-            setBlackCorners={setBlackCorners}
-            skipBasicLands={skipBasicLands}
-            setSkipBasicLands={setSkipBasicLands}
-                          printDecklist={printDecklist}
+          {/* PrintOptions component - only show if cards are loaded */}
+          {cards.length > 0 && (
+            <PrintOptions
+              cropMarks={cropMarks}
+              setCropMarks={setCropMarks}
+              cutLines={cutLines}
+              setCutLines={setCutLines}
+              blackCorners={blackCorners}
+              setBlackCorners={setBlackCorners}
+              skipBasicLands={skipBasicLands}
+              setSkipBasicLands={setSkipBasicLands}
+              printDecklist={printDecklist}
               setPrintDecklist={setPrintDecklist}
-            playtestWatermark={playtestWatermark}
-            setPlaytestWatermark={setPlaytestWatermark}
-            paperSize={paperSize}
-            setPaperSize={setPaperSize}
-            scale={scale}
-            setScale={setScale}
-            onPrint={handleGeneratePDF}
-            printing={generatingPDF}
-            paperSizes={paperSizes}
-          />
+              playtestWatermark={playtestWatermark}
+              setPlaytestWatermark={setPlaytestWatermark}
+              paperSize={paperSize}
+              setPaperSize={setPaperSize}
+              scale={scale}
+              setScale={setScale}
+              onPrint={handleGeneratePDF}
+              printing={generatingPDF}
+              paperSizes={paperSizes}
+            />
+          )}
         </div>
 
         {errors.length > 0 && (
@@ -264,15 +370,7 @@ function App() {
 
         <footer className="app-footer">
           <div className="footer-content">
-            <p>&copy; 2024 mtgtopdf.com. Made with ❤️ for Magic players.</p>
-            <div className="coffee-button">
-              <a href="https://www.buymeacoffee.com/gOZTM9e" target="_blank" rel="noopener noreferrer">
-                <img 
-                  src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=&slug=gOZTM9e&button_colour=FFDD00&font_colour=000000&font_family=Poppins&outline_colour=000000&coffee_colour=ffffff" 
-                  alt="Buy me a coffee"
-                />
-              </a>
-            </div>
+            <p>&copy; 2024 MTGtoPDF. Made with ❤️ for Magic players.</p>
           </div>
         </footer>
       </div>

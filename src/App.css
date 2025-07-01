@@ -1,11 +1,11 @@
 .App {
   min-height: 100vh;
-  padding: 20px 0;
+  padding: 1px 0;
 }
 
 .app-header {
   text-align: center;
-  margin-bottom: 40px;
+  margin-bottom: 16px;
   color: white;
 }
 
