@@ -92,4 +92,135 @@
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
+}
+
+/* Progress Bar Styles */
+.progress-container {
+  margin-top: 20px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.progress-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.progress-message {
+  font-weight: 500;
+}
+
+.progress-count {
+  font-weight: 600;
+  color: #667eea;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+  position: relative;
+}
+
+.progress-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.3) 50%, transparent 100%);
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+@media (max-width: 480px) {
+  .deck-input-container {
+    padding: 0 4vw;
+    margin-bottom: 24px;
+  }
+  .card {
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  .error {
+    font-size: 15px;
+    padding: 16px;
+    margin: 16px 0;
+    border-radius: 10px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .progress-container {
+    padding: 16px 8px;
+    margin: 16px 0 0 0;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .button-group {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .button-group .btn {
+    width: 100%;
+    min-height: 48px;
+    font-size: 18px;
+    padding: 14px 0;
+    margin: 0;
+  }
+  .print-options {
+    padding: 10px 4px;
+    width: 100%;
+    margin-bottom: 18px;
+    box-sizing: border-box;
+  }
+  .print-options-toggles {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+    justify-items: center;
+    align-items: center;
+    margin-bottom: 10px !important;
+  }
+  .print-options-toggles label {
+    font-size: 17px;
+    width: 100%;
+    justify-content: flex-start;
+  }
+  .print-options-controls {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 12px !important;
+  }
+  .print-options-controls button,
+  .print-options-controls select {
+    width: 100%;
+    min-height: 44px;
+    font-size: 17px;
+    margin: 0;
+  }
+  .print-options-controls label {
+    font-size: 16px;
+  }
 } 

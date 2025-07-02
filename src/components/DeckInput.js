@@ -1,24 +1,23 @@
 import React, { useState } from 'react';
 import './DeckInput.css';
 
-const DeckInput = ({ onDeckSubmit, loading }) => {
-  const [decklist, setDecklist] = useState('');
+const DeckInput = ({ onDeckSubmit, loading, loadingProgress, decklistText, setDecklistText }) => {
   const [errors, setErrors] = useState([]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
     setErrors([]);
     
-    if (!decklist.trim()) {
+    if (!decklistText.trim()) {
       setErrors(['Please enter a decklist']);
       return;
     }
     
-    onDeckSubmit(decklist);
+    onDeckSubmit(decklistText);
   };
 
   const handleClear = () => {
-    setDecklist('');
+    setDecklistText('');
     setErrors([]);
   };
 
@@ -35,8 +34,8 @@ const DeckInput = ({ onDeckSubmit, loading }) => {
         
         <div className="textarea-container">
           <textarea
-            value={decklist}
-            onChange={(e) => setDecklist(e.target.value)}
+            value={decklistText}
+            onChange={(e) => setDecklistText(e.target.value)}
             placeholder="4x Lightning Bolt (M11) 146&#10;4x Counterspell (M10) 58&#10;4x Brainstorm (C21) 85&#10;..."
             disabled={loading}
             rows={12}
@@ -56,7 +55,7 @@ const DeckInput = ({ onDeckSubmit, loading }) => {
           <button
             type="submit"
             className="btn btn-success"
-            disabled={loading || !decklist.trim()}
+            disabled={loading || !decklistText.trim()}
           >
             {loading ? (
               <span className="spinner" aria-label="Loading"></span>
@@ -71,9 +70,25 @@ const DeckInput = ({ onDeckSubmit, loading }) => {
           >
             Clear
           </button>
-
-
         </div>
+
+        {/* Progress Bar */}
+        {loading && loadingProgress.total > 0 && (
+          <div className="progress-container">
+            <div className="progress-info">
+              <span className="progress-message">{loadingProgress.message}</span>
+              <span className="progress-count">{loadingProgress.current} / {loadingProgress.total}</span>
+            </div>
+            <div className="progress-bar">
+              <div 
+                className="progress-fill"
+                style={{ 
+                  width: `${(loadingProgress.current / loadingProgress.total) * 100}%` 
+                }}
+              ></div>
+            </div>
+          </div>
+        )}
       </form>
     </div>
   );

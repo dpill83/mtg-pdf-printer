@@ -10,7 +10,7 @@ export const parseDecklist = (decklistText) => {
     if (!trimmedLine) continue;
 
     // Match patterns like "1x Lightning Bolt (2XM) 123" or "1 Lightning Bolt"
-    const match = trimmedLine.match(/^(\d+)(?:x\s*)?(.+?)(?:\s*\(([^)]+)\))?(?:\s+(\d+))?$/);
+    const match = trimmedLine.match(/^(\d+)(?:x\s*)?(.+?)(?:\s*\(([^)]+)\))?(?:\s+([A-Za-z0-9]+))?$/);
     if (match) {
       const [, quantity, cardName, setCode, collectorNumber] = match;
       cards.push({
@@ -84,7 +84,7 @@ export const fetchCardData = async (cardName, setCode = null, collectorNumber = 
     });
     if (response.data.data && response.data.data.length > 0) {
       const card = response.data.data[0];
-      const imageUrl = card.image_uris?.png || card.card_faces?.[0]?.image_uris?.png;
+      const imageUrl = card.image_uris?.large || card.card_faces?.[0]?.image_uris?.large;
       return {
         name: card.name,
         imageUrl: imageUrl,
@@ -119,14 +119,24 @@ export const fetchAllPrintings = async (prints_search_uri) => {
   }
 };
 
-// Fetch multiple cards with error handling
-export const fetchMultipleCards = async (cards) => {
+// Fetch multiple cards with error handling and progress tracking
+export const fetchMultipleCards = async (cards, onProgress = null) => {
   const results = [];
   const errors = [];
   const invalidLineIndices = [];
 
   for (let idx = 0; idx < cards.length; idx++) {
     const card = cards[idx];
+    
+    // Update progress
+    if (onProgress) {
+      onProgress({
+        current: idx + 1,
+        total: cards.length,
+        message: `Loading ${card.name}...`
+      });
+    }
+    
     try {
       const cardData = await fetchCardData(card.name, card.setCode, card.collectorNumber);
       const cardDataWithQuantity = { ...cardData, quantity: card.quantity };

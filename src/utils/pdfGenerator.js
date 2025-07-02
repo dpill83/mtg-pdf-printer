@@ -151,8 +151,14 @@ const generatePDF = async (cards, paper = { width: 8.5, height: 11.0, unit: 'in'
       if (!imgBytes) continue; // Skip if image failed to load
 
       try {
-        // Embed image (assume PNG)
-        const img = await pdfDoc.embedPng(imgBytes);
+        // Embed image (try PNG first, then JPG)
+        let img;
+        try {
+          img = await pdfDoc.embedPng(imgBytes);
+        } catch (error) {
+          // If PNG fails, try JPG
+          img = await pdfDoc.embedJpg(imgBytes);
+        }
         
         // Calculate grid position
         const row = Math.floor(j / numCols);

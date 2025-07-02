@@ -115,6 +115,33 @@
 }
 
 @media (max-width: 480px) {
+  .container {
+    padding: 8px 2vw;
+  }
+  .card {
+    padding: 14px 6px;
+    border-radius: 10px;
+    margin-bottom: 16px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .error {
+    font-size: 15px;
+    padding: 16px;
+    margin: 16px 0;
+    border-radius: 10px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .app-header {
+    margin-bottom: 10px;
+    padding: 8px 0;
+  }
+  .preview-section {
+    margin-top: 10px;
+    margin-bottom: 10px;
+    padding: 0 2vw;
+  }
   .app-header h1 {
     font-size: 28px;
   }

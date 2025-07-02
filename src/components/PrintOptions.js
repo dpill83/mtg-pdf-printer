@@ -35,9 +35,9 @@ const PrintOptions = ({
   paperSizes
 }) => {
   return (
-    <div className="bg-white rounded-lg shadow p-6 mt-6 flex flex-col space-y-6 w-full">
+    <div className="print-options bg-white rounded-lg shadow p-6 mt-6 flex flex-col space-y-6 w-full">
       {/* Toggle switches in a true 2x3 grid */}
-      <div className="grid grid-cols-3 gap-x-8 gap-y-3 items-center justify-center mb-4">
+      <div className="print-options-toggles grid grid-cols-3 gap-x-8 gap-y-3 items-center justify-center mb-4">
         <ToggleSwitch checked={cropMarks} onChange={setCropMarks} label="Crop marks" id="crop-marks" />
         <ToggleSwitch checked={cutLines} onChange={setCutLines} label="Cut lines" id="cut-lines" />
         <ToggleSwitch checked={skipBasicLands} onChange={setSkipBasicLands} label="Skip basic lands" id="skip-basic-lands" />
@@ -47,7 +47,7 @@ const PrintOptions = ({
       </div>
       
       {/* Third row with print button and dropdowns */}
-      <div className="flex flex-row items-center justify-center space-x-6">
+      <div className="print-options-controls flex flex-row items-center justify-center space-x-6">
         <button
           type="button"
           className="btn btn-primary"

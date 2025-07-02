@@ -123,6 +123,37 @@
   font-size: 16px;
 }
 
+.add-one-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  border-radius: 8px;
+}
+
+.add-one-btn {
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+  font-size: 1.1em;
+  font-weight: 700;
+  border: none;
+  border-radius: 6px;
+  padding: 12px 24px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+}
+.add-one-btn:hover, .add-one-btn:focus {
+  background: linear-gradient(90deg, #764ba2 0%, #667eea 100%);
+  transform: scale(1.05);
+}
+
 @media (max-width: 768px) {
   .card-grid {
     grid-template-columns: repeat(2, 220px);
@@ -132,8 +163,51 @@
 }
 
 @media (max-width: 480px) {
+  .card-grid-container {
+    margin-top: 16px;
+    padding: 0 4vw;
+  }
   .card-grid {
-    grid-template-columns: 1fr;
-    max-width: 220px;
+    grid-template-columns: repeat(2, 1fr);
+    max-width: 100%;
+    gap: 10px;
+  }
+  .card-item-wrapper {
+    width: 48vw;
+    max-width: 140px;
+    margin-bottom: 8px;
+  }
+  .card-item {
+    border-radius: 10px;
+    min-width: 0;
+    width: 100%;
+    margin: 0 auto;
+    padding: 0;
+  }
+  .card-placeholder {
+    font-size: 15px;
+    padding: 10px;
+  }
+  .card-controls {
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 6px;
+  }
+  .card-version-dropdown {
+    max-width: 100%;
+    font-size: 15px;
+    padding: 8px;
+  }
+  .card-quantity-badge {
+    font-size: 1em;
+    padding: 3px 10px;
+    margin-bottom: 2px;
+  }
+  .add-one-btn {
+    font-size: 1em;
+    padding: 10px 0;
+    width: 90%;
+    min-width: 0;
+    max-width: 180px;
   }
 } 

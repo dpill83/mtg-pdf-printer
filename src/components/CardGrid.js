@@ -3,8 +3,9 @@ import './CardGrid.css';
 
 const CARD_WIDTH = 220; // px
 
-const CardGrid = ({ cards, loading, onSelectPrinting, onPrint, printing }) => {
+const CardGrid = ({ cards, loading, onSelectPrinting, onPrint, printing, onAddOne }) => {
   const [imgErrors, setImgErrors] = useState([]);
+  const [activeCardIndex, setActiveCardIndex] = useState(null);
 
   if (loading) {
     return (
@@ -35,6 +36,18 @@ const CardGrid = ({ cards, loading, onSelectPrinting, onPrint, printing }) => {
     });
   };
 
+  // Dismiss overlay if clicking outside any card
+  React.useEffect(() => {
+    if (activeCardIndex === null) return;
+    const handleClick = (e) => {
+      if (!e.target.closest('.card-item-wrapper')) {
+        setActiveCardIndex(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [activeCardIndex]);
+
   return (
     <div className="card-grid-container mt-6">
       <div className="card-grid">
@@ -43,6 +56,7 @@ const CardGrid = ({ cards, loading, onSelectPrinting, onPrint, printing }) => {
             key={index}
             className="card-item-wrapper"
             style={{ width: CARD_WIDTH }}
+            onClick={() => setActiveCardIndex(index)}
           >
             <div className="card-item">
               {!imgErrors[index] ? (
@@ -61,6 +75,19 @@ const CardGrid = ({ cards, loading, onSelectPrinting, onPrint, printing }) => {
               ) : (
                 <div className="card-placeholder">
                   <span>{card.name}</span>
+                </div>
+              )}
+              {/* Overlay for + Add One */}
+              {activeCardIndex === index && (
+                <div className="add-one-overlay">
+                  <button
+                    className="add-one-btn"
+                    onClick={e => {
+                      e.stopPropagation();
+                      onAddOne && onAddOne(index);
+                      setActiveCardIndex(null);
+                    }}
+                  >+ Add One</button>
                 </div>
               )}
             </div>

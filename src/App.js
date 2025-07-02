@@ -8,8 +8,10 @@ import './App.css';
 function App() {
   const [cards, setCards] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [loadingProgress, setLoadingProgress] = useState({ current: 0, total: 0, message: '' });
   const [generatingPDF, setGeneratingPDF] = useState(false);
   const [errors, setErrors] = useState([]);
+  const [decklistText, setDecklistText] = useState('');
   
   // Print options state - moved from inline controls to centralized state
   const [cropMarks, setCropMarks] = useState(true);
@@ -51,8 +53,9 @@ function App() {
         return;
       }
 
-      // Fetch card data from Scryfall
-      const { results, errors: fetchErrors } = await fetchMultipleCards(parsedCards);
+      // Fetch card data from Scryfall with progress tracking
+      setLoadingProgress({ current: 0, total: parsedCards.length, message: 'Starting to load cards...' });
+      const { results, errors: fetchErrors } = await fetchMultipleCards(parsedCards, setLoadingProgress);
       if (results.length === 0) {
         setErrors(['No cards could be found. Please check the card names and try again.']);
         setLoading(false);
@@ -60,7 +63,15 @@ function App() {
       }
 
       // For each card, fetch all printings and set up the card object
+      setLoadingProgress({ current: 0, total: results.length, message: 'Loading card printings...' });
       const cardsWithPrintings = await Promise.all(results.map(async (card, idx) => {
+        // Update progress for printings phase
+        setLoadingProgress({
+          current: idx + 1,
+          total: results.length,
+          message: `Loading printings for ${card.name}...`
+        });
+        
         let printings = [];
         try {
           if (card.prints_search_uri) {
@@ -78,7 +89,7 @@ function App() {
             set_name: p.set_name,
             collector_number: p.collector_number,
             released_at: p.released_at,
-            imageUrl: p.image_uris?.png || p.card_faces?.[0]?.image_uris?.png,
+            imageUrl: p.image_uris?.large || p.card_faces?.[0]?.image_uris?.large,
           })),
           selectedPrintingId: selectedPrinting ? selectedPrinting.id : null,
         };
@@ -99,6 +110,24 @@ function App() {
 
       setCards(finalCards);
 
+      // Update decklistText to match the canonical preview
+      const canonicalDecklist = finalCards.map(card => {
+        const qty = card.quantity || 1;
+        const name = card.name;
+        const setCode = card.setCode || card.set || (card.printings && card.printings[0]?.set) || '';
+        const collectorNumber = card.collectorNumber || (card.printings && card.printings[0]?.collector_number) || '';
+        let line = `${qty}x ${name}`;
+        if (setCode && collectorNumber) {
+          line += ` (${setCode}) ${collectorNumber}`;
+        } else if (setCode) {
+          line += ` (${setCode})`;
+        } else if (collectorNumber) {
+          line += ` ${collectorNumber}`;
+        }
+        return line;
+      }).join('\n');
+      setDecklistText(canonicalDecklist);
+
       if (fetchErrors.length > 0) {
         setErrors(fetchErrors);
       }
@@ -106,6 +135,7 @@ function App() {
       setErrors([`Error loading cards: ${error.message}`]);
     } finally {
       setLoading(false);
+      setLoadingProgress({ current: 0, total: 0, message: '' });
     }
   };
 
@@ -122,6 +152,35 @@ function App() {
         imageUrl: imageUrl,
       };
     }));
+    // Update decklistText to match the new printings
+    setDecklistText(prev => {
+      const updatedCards = cards.map((card, idx) => {
+        if (idx !== cardIdx) return card;
+        const selected = card.printings.find(p => p.id === printingId) || card.printings[0];
+        return {
+          ...card,
+          selectedPrintingId: selected.id,
+          imageUrl: selected && selected.imageUrl ? selected.imageUrl : card.imageUrl,
+          setCode: selected.set,
+          collectorNumber: selected.collector_number,
+        };
+      });
+      return updatedCards.map(card => {
+        const qty = card.quantity || 1;
+        const name = card.name;
+        const setCode = card.setCode || card.set || (card.printings && card.printings[0]?.set) || '';
+        const collectorNumber = card.collectorNumber || (card.printings && card.printings[0]?.collector_number) || '';
+        let line = `${qty}x ${name}`;
+        if (setCode && collectorNumber) {
+          line += ` (${setCode}) ${collectorNumber}`;
+        } else if (setCode) {
+          line += ` (${setCode})`;
+        } else if (collectorNumber) {
+          line += ` ${collectorNumber}`;
+        }
+        return line;
+      }).join('\n');
+    });
   };
 
   const handleGeneratePDF = async () => {
@@ -191,6 +250,41 @@ function App() {
       </div>
     );
   }
+
+  // Add one to card quantity and update decklist text
+  const handleAddOne = (cardIdx) => {
+    setCards(prevCards => prevCards.map((card, idx) => {
+      if (idx !== cardIdx) return card;
+      return { ...card, quantity: (card.quantity || 1) + 1 };
+    }));
+
+    // Update decklist text
+    setDecklistText(prevText => {
+      const lines = prevText.split('\n');
+      const card = cards[cardIdx];
+      if (!card) return prevText;
+      // Try to find a line that matches this card (by name, set, collector number)
+      const matchIdx = lines.findIndex(line => {
+        // Accepts lines like '2x Card Name (SET) 123', '2 Card Name', etc.
+        const regex = new RegExp(`^\\s*\\d+x?\\s+${card.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(\\s*\\([^)]+\\))?(\\s+${card.collectorNumber})?`, 'i');
+        return regex.test(line);
+      });
+      if (matchIdx !== -1) {
+        // Increment the quantity in the matched line
+        const line = lines[matchIdx];
+        const parts = line.match(/^(\s*)(\d+)(x?)\s+(.+)$/);
+        if (parts) {
+          const [, pre, qty, x, rest] = parts;
+          const newQty = parseInt(qty, 10) + 1;
+          lines[matchIdx] = `${pre}${newQty}${x} ${rest}`;
+        }
+      } else {
+        // Add a new line for this card
+        lines.push(`1 ${card.name}`);
+      }
+      return lines.join('\n');
+    });
+  };
 
   return (
     <div className="App">
@@ -290,9 +384,9 @@ function App() {
               feedback@mtgtopdf.com
             </a>
 
-            <p style={{ fontSize: 14, color: '#777', marginTop: 24 }}><center>
-            <a href="https://www.buymeacoffee.com/gOZTM9e"><img src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=&slug=gOZTM9e&button_colour=FFDD00&font_colour=000000&font_family=Cookie&outline_colour=000000&coffee_colour=ffffff" /></a>
-            </center></p>
+            <p style={{ fontSize: 14, color: '#777', marginTop: 24, textAlign: 'center' }}>
+            <a href="https://www.buymeacoffee.com/gOZTM9e"><img src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=&slug=gOZTM9e&button_colour=FFDD00&font_colour=000000&font_family=Cookie&outline_colour=000000&coffee_colour=ffffff" alt="Buy me a coffee" /></a>
+            </p>
           </div>
         </div>
       )}
@@ -321,6 +415,9 @@ function App() {
           <DeckInput
             onDeckSubmit={handleDeckSubmit}
             loading={loading}
+            loadingProgress={loadingProgress}
+            decklistText={decklistText}
+            setDecklistText={setDecklistText}
           />
           {/* PrintOptions component - only show if cards are loaded */}
           {cards.length > 0 && (
@@ -363,7 +460,7 @@ function App() {
           <div className="card">
             <div className="preview-section">
               <h2>Card Preview (3x3 Grid)</h2>
-              <CardGrid cards={cards} loading={loading} onSelectPrinting={handleSelectPrinting} onPrint={handleGeneratePDF} printing={generatingPDF} />
+              <CardGrid cards={cards} loading={loading} onSelectPrinting={handleSelectPrinting} onPrint={handleGeneratePDF} printing={generatingPDF} onAddOne={handleAddOne} />
             </div>
           </div>
         )}
