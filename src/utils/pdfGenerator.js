@@ -45,12 +45,29 @@ const generatePDF = async (cards, paper = { width: 8.5, height: 11.0, unit: 'in'
     cards = cards.filter(card => !basicLands.includes(card.name));
   }
 
-  // Expand cards array by quantity
+  // Expand cards array by quantity and handle double-faced cards
   const expandedCards = [];
   for (const card of cards) {
     const qty = card.quantity || 1;
     for (let i = 0; i < qty; i++) {
-      expandedCards.push(card);
+      // For double-faced cards, add both front and back
+      if (card.isDoubleFaced && card.backImageUrl) {
+        // Add front face
+        expandedCards.push({
+          ...card,
+          imageUrl: card.imageUrl,
+          isBackFace: false
+        });
+        // Add back face
+        expandedCards.push({
+          ...card,
+          imageUrl: card.backImageUrl,
+          isBackFace: true
+        });
+      } else {
+        // Single-faced card
+        expandedCards.push(card);
+      }
     }
   }
   cards = expandedCards;

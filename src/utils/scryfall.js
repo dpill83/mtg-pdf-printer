@@ -84,14 +84,36 @@ export const fetchCardData = async (cardName, setCode = null, collectorNumber = 
     });
     if (response.data.data && response.data.data.length > 0) {
       const card = response.data.data[0];
-      const imageUrl = card.image_uris?.large || card.card_faces?.[0]?.image_uris?.large;
-      return {
-        name: card.name,
-        imageUrl: imageUrl,
-        set: card.set_name,
-        collectorNumber: card.collector_number,
-        prints_search_uri: card.prints_search_uri
-      };
+      
+      // Handle double-faced cards
+      if (card.card_faces && card.card_faces.length > 1) {
+        // For double-faced cards, return both faces
+        const frontFace = card.card_faces[0];
+        const backFace = card.card_faces[1];
+        
+        return {
+          name: card.name,
+          imageUrl: frontFace.image_uris?.large,
+          backImageUrl: backFace.image_uris?.large,
+          set: card.set_name,
+          collectorNumber: card.collector_number,
+          prints_search_uri: card.prints_search_uri,
+          isDoubleFaced: true,
+          frontName: frontFace.name,
+          backName: backFace.name
+        };
+      } else {
+        // Single-faced card
+        const imageUrl = card.image_uris?.large || card.card_faces?.[0]?.image_uris?.large;
+        return {
+          name: card.name,
+          imageUrl: imageUrl,
+          set: card.set_name,
+          collectorNumber: card.collector_number,
+          prints_search_uri: card.prints_search_uri,
+          isDoubleFaced: false
+        };
+      }
     }
     throw new Error(`Card not found: ${cardName}`);
   } catch (error) {
@@ -113,7 +135,28 @@ export const fetchAllPrintings = async (prints_search_uri) => {
     }
     // Sort by released_at descending (newest first)
     printings.sort((a, b) => (b.released_at || '').localeCompare(a.released_at || ''));
-    return printings;
+    
+    // Process printings to handle double-faced cards
+    return printings.map(printing => {
+      if (printing.card_faces && printing.card_faces.length > 1) {
+        const frontFace = printing.card_faces[0];
+        const backFace = printing.card_faces[1];
+        return {
+          ...printing,
+          imageUrl: frontFace.image_uris?.large,
+          backImageUrl: backFace.image_uris?.large,
+          isDoubleFaced: true,
+          frontName: frontFace.name,
+          backName: backFace.name
+        };
+      } else {
+        return {
+          ...printing,
+          imageUrl: printing.image_uris?.large || printing.card_faces?.[0]?.image_uris?.large,
+          isDoubleFaced: false
+        };
+      }
+    });
   } catch (error) {
     throw new Error('Failed to fetch printings');
   }

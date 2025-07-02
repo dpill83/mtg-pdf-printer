@@ -1,9 +1,27 @@
 import React from 'react';
 
 const scales = [
-  { label: '100%', value: '100' },
-  { label: '95%', value: '95' },
   { label: '90%', value: '90' },
+  { label: '91%', value: '91' },
+  { label: '92%', value: '92' },
+  { label: '93%', value: '93' },
+  { label: '94%', value: '94' },
+  { label: '95%', value: '95' },
+  { label: '96%', value: '96' },
+  { label: '97%', value: '97' },
+  { label: '98%', value: '98' },
+  { label: '99%', value: '99' },
+  { label: '100%', value: '100' },
+  { label: '101%', value: '101' },
+  { label: '102%', value: '102' },
+  { label: '103%', value: '103' },
+  { label: '104%', value: '104' },
+  { label: '105%', value: '105' },
+  { label: '106%', value: '106' },
+  { label: '107%', value: '107' },
+  { label: '108%', value: '108' },
+  { label: '109%', value: '109' },
+  { label: '110%', value: '110' },
 ];
 
 const ToggleSwitch = ({ checked, onChange, label, id }) => (

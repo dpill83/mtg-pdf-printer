@@ -3,7 +3,7 @@ import './CardGrid.css';
 
 const CARD_WIDTH = 220; // px
 
-const CardGrid = ({ cards, loading, onSelectPrinting, onPrint, printing, onAddOne }) => {
+const CardGrid = ({ cards, loading, onSelectPrinting, onPrint, printing, onAddOne, onRemoveOne }) => {
   const [imgErrors, setImgErrors] = useState([]);
   const [activeCardIndex, setActiveCardIndex] = useState(null);
 
@@ -77,17 +77,29 @@ const CardGrid = ({ cards, loading, onSelectPrinting, onPrint, printing, onAddOn
                   <span>{card.name}</span>
                 </div>
               )}
-              {/* Overlay for + Add One */}
+              {/* Overlay for Add/Remove buttons */}
               {activeCardIndex === index && (
-                <div className="add-one-overlay">
-                  <button
-                    className="add-one-btn"
-                    onClick={e => {
-                      e.stopPropagation();
-                      onAddOne && onAddOne(index);
-                      setActiveCardIndex(null);
-                    }}
-                  >+ Add One</button>
+                <div className="card-overlay">
+                  <div className="overlay-buttons">
+                    <button
+                      className="add-one-btn"
+                      onClick={e => {
+                        e.stopPropagation();
+                        onAddOne && onAddOne(index);
+                        setActiveCardIndex(null);
+                      }}
+                    >+ Add One</button>
+                    {card.quantity > 1 && (
+                      <button
+                        className="remove-one-btn"
+                        onClick={e => {
+                          e.stopPropagation();
+                          onRemoveOne && onRemoveOne(index);
+                          setActiveCardIndex(null);
+                        }}
+                      >- Remove One</button>
+                    )}
+                  </div>
                 </div>
               )}
             </div>

@@ -123,7 +123,7 @@
   font-size: 16px;
 }
 
-.add-one-overlay {
+.card-overlay {
   position: absolute;
   top: 0;
   left: 0;
@@ -135,6 +135,16 @@
   justify-content: center;
   z-index: 2;
   border-radius: 8px;
+}
+
+.overlay-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
 }
 
 .add-one-btn {
@@ -151,6 +161,24 @@
 }
 .add-one-btn:hover, .add-one-btn:focus {
   background: linear-gradient(90deg, #764ba2 0%, #667eea 100%);
+  transform: scale(1.05);
+}
+
+.remove-one-btn {
+  background: linear-gradient(90deg, #e53e3e 0%, #c53030 100%);
+  color: #fff;
+  font-size: 1.1em;
+  font-weight: 700;
+  border: none;
+  border-radius: 6px;
+  padding: 12px 24px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+}
+
+.remove-one-btn:hover, .remove-one-btn:focus {
+  background: linear-gradient(90deg, #c53030 0%, #e53e3e 100%);
   transform: scale(1.05);
 }
 
@@ -203,11 +231,15 @@
     padding: 3px 10px;
     margin-bottom: 2px;
   }
-  .add-one-btn {
+  .add-one-btn, .remove-one-btn {
     font-size: 1em;
     padding: 10px 0;
     width: 90%;
     min-width: 0;
     max-width: 180px;
+  }
+  
+  .overlay-buttons {
+    gap: 6px;
   }
 } 

@@ -89,7 +89,11 @@ function App() {
             set_name: p.set_name,
             collector_number: p.collector_number,
             released_at: p.released_at,
-            imageUrl: p.image_uris?.large || p.card_faces?.[0]?.image_uris?.large,
+            imageUrl: p.imageUrl,
+            backImageUrl: p.backImageUrl,
+            isDoubleFaced: p.isDoubleFaced,
+            frontName: p.frontName,
+            backName: p.backName,
           })),
           selectedPrintingId: selectedPrinting ? selectedPrinting.id : null,
         };
@@ -101,10 +105,18 @@ function App() {
       const finalCards = cardsWithPrintings.map(card => {
         const selected = card.printings.find(p => p.id === card.selectedPrintingId) || card.printings[0];
         const imageUrl = selected && selected.imageUrl ? selected.imageUrl : card.imageUrl;
+        const backImageUrl = selected && selected.backImageUrl ? selected.backImageUrl : card.backImageUrl;
+        const isDoubleFaced = selected ? selected.isDoubleFaced : card.isDoubleFaced;
+        const frontName = selected ? selected.frontName : card.frontName;
+        const backName = selected ? selected.backName : card.backName;
         
         return {
           ...card,
           imageUrl: imageUrl,
+          backImageUrl: backImageUrl,
+          isDoubleFaced: isDoubleFaced,
+          frontName: frontName,
+          backName: backName,
         };
       });
 
@@ -145,11 +157,19 @@ function App() {
       if (idx !== cardIdx) return card;
       const selected = card.printings.find(p => p.id === printingId) || card.printings[0];
       const imageUrl = selected && selected.imageUrl ? selected.imageUrl : card.imageUrl;
+      const backImageUrl = selected && selected.backImageUrl ? selected.backImageUrl : card.backImageUrl;
+      const isDoubleFaced = selected ? selected.isDoubleFaced : card.isDoubleFaced;
+      const frontName = selected ? selected.frontName : card.frontName;
+      const backName = selected ? selected.backName : card.backName;
       
       return {
         ...card,
         selectedPrintingId: selected.id,
         imageUrl: imageUrl,
+        backImageUrl: backImageUrl,
+        isDoubleFaced: isDoubleFaced,
+        frontName: frontName,
+        backName: backName,
       };
     }));
     // Update decklistText to match the new printings
@@ -161,6 +181,10 @@ function App() {
           ...card,
           selectedPrintingId: selected.id,
           imageUrl: selected && selected.imageUrl ? selected.imageUrl : card.imageUrl,
+          backImageUrl: selected && selected.backImageUrl ? selected.backImageUrl : card.backImageUrl,
+          isDoubleFaced: selected ? selected.isDoubleFaced : card.isDoubleFaced,
+          frontName: selected ? selected.frontName : card.frontName,
+          backName: selected ? selected.backName : card.backName,
           setCode: selected.set,
           collectorNumber: selected.collector_number,
         };
@@ -281,6 +305,39 @@ function App() {
       } else {
         // Add a new line for this card
         lines.push(`1 ${card.name}`);
+      }
+      return lines.join('\n');
+    });
+  };
+
+  // Remove one from card quantity and update decklist text
+  const handleRemoveOne = (cardIdx) => {
+    setCards(prevCards => prevCards.map((card, idx) => {
+      if (idx !== cardIdx) return card;
+      const newQuantity = Math.max(1, (card.quantity || 1) - 1);
+      return { ...card, quantity: newQuantity };
+    }));
+
+    // Update decklist text
+    setDecklistText(prevText => {
+      const lines = prevText.split('\n');
+      const card = cards[cardIdx];
+      if (!card) return prevText;
+      // Try to find a line that matches this card (by name, set, collector number)
+      const matchIdx = lines.findIndex(line => {
+        // Accepts lines like '2x Card Name (SET) 123', '2 Card Name', etc.
+        const regex = new RegExp(`^\\s*\\d+x?\\s+${card.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(\\s*\\([^)]+\\))?(\\s+${card.collectorNumber})?`, 'i');
+        return regex.test(line);
+      });
+      if (matchIdx !== -1) {
+        // Decrement the quantity in the matched line
+        const line = lines[matchIdx];
+        const parts = line.match(/^(\s*)(\d+)(x?)\s+(.+)$/);
+        if (parts) {
+          const [, pre, qty, x, rest] = parts;
+          const newQty = Math.max(1, parseInt(qty, 10) - 1);
+          lines[matchIdx] = `${pre}${newQty}${x} ${rest}`;
+        }
       }
       return lines.join('\n');
     });
@@ -460,7 +517,7 @@ function App() {
           <div className="card">
             <div className="preview-section">
               <h2>Card Preview (3x3 Grid)</h2>
-              <CardGrid cards={cards} loading={loading} onSelectPrinting={handleSelectPrinting} onPrint={handleGeneratePDF} printing={generatingPDF} onAddOne={handleAddOne} />
+              <CardGrid cards={cards} loading={loading} onSelectPrinting={handleSelectPrinting} onPrint={handleGeneratePDF} printing={generatingPDF} onAddOne={handleAddOne} onRemoveOne={handleRemoveOne} />
             </div>
           </div>
         )}
