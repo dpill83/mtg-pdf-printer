@@ -103,7 +103,7 @@ src/
 - `npm start`: Start React development server
 - `npm run dev`: Start React development server (alias for npm start)
 - `npm build`: Build for production
-- `npm test`: Run tests
+
 - `npm eject`: Eject from Create React App
 
 ## Browser Compatibility

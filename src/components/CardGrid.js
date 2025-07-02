@@ -65,11 +65,7 @@ const CardGrid = ({ cards, loading, onSelectPrinting, onPrint, printing, onAddOn
                   alt={card.name}
                   className="card-image"
                   onError={(e) => {
-                    console.error(`Failed to load image for ${card.name}:`, card.imageUrl, e);
                     handleImgError(index);
-                  }}
-                  onLoad={() => {
-                    console.log(`Successfully loaded image for ${card.name}:`, card.imageUrl);
                   }}
                 />
               ) : (
@@ -81,14 +77,14 @@ const CardGrid = ({ cards, loading, onSelectPrinting, onPrint, printing, onAddOn
               {activeCardIndex === index && (
                 <div className="card-overlay">
                   <div className="overlay-buttons">
-                    <button
-                      className="add-one-btn"
-                      onClick={e => {
-                        e.stopPropagation();
-                        onAddOne && onAddOne(index);
-                        setActiveCardIndex(null);
-                      }}
-                    >+ Add One</button>
+                  <button
+                    className="add-one-btn"
+                    onClick={e => {
+                      e.stopPropagation();
+                      onAddOne && onAddOne(index);
+                      setActiveCardIndex(null);
+                    }}
+                  >+ Add One</button>
                     {card.quantity > 1 && (
                       <button
                         className="remove-one-btn"

@@ -66,7 +66,7 @@ const generatePDF = async (cards, paper = { width: 8.5, height: 11.0, unit: 'in'
         });
       } else {
         // Single-faced card
-        expandedCards.push(card);
+      expandedCards.push(card);
       }
     }
   }
@@ -104,7 +104,6 @@ const generatePDF = async (cards, paper = { width: 8.5, height: 11.0, unit: 'in'
   let triangleImages = null;
   if (options.blackCorners) {
     try {
-      console.log('Loading triangle images for black corners...');
       const triangleFiles = [
         'triangle_topleft.png',
         'triangle_topright.png',
@@ -115,15 +114,11 @@ const generatePDF = async (cards, paper = { width: 8.5, height: 11.0, unit: 'in'
       triangleImages = await Promise.all(
         triangleFiles.map(async (filename) => {
           const filePath = path.join(__dirname, '..', '..', 'public', filename);
-          console.log(`Loading triangle image: ${filePath}`);
           const fileBuffer = fs.readFileSync(filePath);
-          console.log(`Triangle image loaded: ${filename}, size: ${fileBuffer.length} bytes`);
           return await pdfDoc.embedPng(fileBuffer);
         })
       );
-      console.log(`Successfully loaded ${triangleImages.length} triangle images`);
     } catch (error) {
-      console.error('Failed to load triangle images:', error);
       triangleImages = null;
     }
   }
@@ -135,9 +130,7 @@ const generatePDF = async (cards, paper = { width: 8.5, height: 11.0, unit: 'in'
       const watermarkPath = path.join(__dirname, '..', '..', 'public', 'playtest_watermark.png');
       const watermarkBytes = fs.readFileSync(watermarkPath);
       playtestWatermarkImage = await pdfDoc.embedPng(watermarkBytes);
-      console.log('Loaded playtest watermark image:', watermarkPath);
     } catch (error) {
-      console.error('Failed to load playtest watermark image:', error);
       playtestWatermarkImage = null;
     }
   }
@@ -150,7 +143,6 @@ const generatePDF = async (cards, paper = { width: 8.5, height: 11.0, unit: 'in'
         const arrayBuffer = await response.arrayBuffer();
         return new Uint8Array(arrayBuffer);
       } catch (error) {
-        console.error(`Failed to fetch image for ${card.name}:`, error);
         return null;
       }
     })
@@ -211,13 +203,12 @@ const generatePDF = async (cards, paper = { width: 8.5, height: 11.0, unit: 'in'
           });
         }
       } catch (error) {
-        console.error(`Failed to embed image for ${pageCards[j].name}:`, error);
+        // Continue with next card if image embedding fails
       }
     }
 
     // Draw black corner triangles above the cards if enabled
     if (options.blackCorners && triangleImages) {
-      console.log('Drawing black corner triangles...');
       // Triangle size: 8px = 8/72 = 0.111 inches = 8 points
       const TRIANGLE_SIZE_POINTS = 8;
       
@@ -228,8 +219,6 @@ const generatePDF = async (cards, paper = { width: 8.5, height: 11.0, unit: 'in'
         // Calculate card position
         const cardX = scaledMarginX + (col * cardWidth);
         const cardY = pageHeight - scaledMarginY - cardHeight - (row * cardHeight);
-        
-        console.log(`Drawing triangles for card ${j} at position (${cardX}, ${cardY})`);
         
         // Draw triangle corners at each corner of the card
         // Top-left corner
@@ -264,7 +253,6 @@ const generatePDF = async (cards, paper = { width: 8.5, height: 11.0, unit: 'in'
           height: TRIANGLE_SIZE_POINTS,
         });
       }
-      console.log('Finished drawing black corner triangles');
     }
 
     // Add crop marks if enabled

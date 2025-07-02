@@ -24,14 +24,6 @@ const DeckInput = ({ onDeckSubmit, loading, loadingProgress, decklistText, setDe
   return (
     <div className="deck-input-container">
       <form onSubmit={handleSubmit}>
-        <div className="input-header">
-          <h2>Enter Your Decklist</h2>
-          <p>Paste your Magic: The Gathering decklist below (one card per line)</p>
-          <p className="format-example">
-            Format: "1x Lightning Bolt (M11) 146" or "1 Lightning Bolt"
-          </p>
-        </div>
-        
         <div className="textarea-container">
           <textarea
             value={decklistText}

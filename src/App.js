@@ -97,7 +97,6 @@ function App() {
           })),
           selectedPrintingId: selectedPrinting ? selectedPrinting.id : null,
         };
-        console.log('Card with printings:', cardWithPrintings.name, 'printings:', cardWithPrintings.printings.length, cardWithPrintings.printings[0]);
         return cardWithPrintings;
       }));
 
@@ -452,9 +451,9 @@ function App() {
         <div className="container mx-auto px-4 py-3 flex justify-between items-center">
           <div className="text-xl font-bold text-gray-900">MTGtoPDF</div>
           <div className="flex space-x-6">
-            <a href="#" className="text-gray-600 hover:text-gray-900 font-medium" onClick={e => { e.preventDefault(); setAboutOpen(true); }}>About</a>
-            <a href="#" className="text-gray-600 hover:text-gray-900 font-medium" onClick={e => { e.preventDefault(); setFaqOpen(true); }}>FAQ</a>
-            <a href="#" className="text-gray-600 hover:text-gray-900 font-medium" onClick={e => { e.preventDefault(); setFeedbackOpen(true); }}>Send feedback</a>
+            <button className="text-gray-600 hover:text-gray-900 font-medium bg-transparent border-none cursor-pointer" onClick={() => setAboutOpen(true)}>About</button>
+            <button className="text-gray-600 hover:text-gray-900 font-medium bg-transparent border-none cursor-pointer" onClick={() => setFaqOpen(true)}>FAQ</button>
+            <button className="text-gray-600 hover:text-gray-900 font-medium bg-transparent border-none cursor-pointer" onClick={() => setFeedbackOpen(true)}>Send feedback</button>
           </div>
         </div>
       </div>

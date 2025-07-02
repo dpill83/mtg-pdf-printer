@@ -35,35 +35,7 @@ export const parseDecklist = (decklistText) => {
   return cards;
 };
 
-// Test function to verify API is working
-export const testScryfallAPI = async () => {
-  try {
-    console.log('Testing Scryfall API...');
-    
-    // Test 1: Simple card search
-    const response1 = await axios.get('https://api.scryfall.com/cards/search', {
-      params: { q: '!"Lightning Bolt"', unique: 'cards' }
-    });
-    console.log('Test 1 (Lightning Bolt):', response1.data.data.length, 'results');
-    
-    // Test 2: Set-specific search
-    const response2 = await axios.get('https://api.scryfall.com/cards/search', {
-      params: { q: '!"Lightning Bolt" set:M11', unique: 'cards' }
-    });
-    console.log('Test 2 (Lightning Bolt M11):', response2.data.data.length, 'results');
-    
-    // Test 3: Counterspell search
-    const response3 = await axios.get('https://api.scryfall.com/cards/search', {
-      params: { q: '!"Counterspell"', unique: 'cards' }
-    });
-    console.log('Test 3 (Counterspell):', response3.data.data.length, 'results');
-    
-    return true;
-  } catch (error) {
-    console.error('API test failed:', error.response?.status, error.response?.statusText);
-    return false;
-  }
-};
+
 
 // Fetch card data from Scryfall API
 export const fetchCardData = async (cardName, setCode = null, collectorNumber = null) => {
@@ -104,15 +76,15 @@ export const fetchCardData = async (cardName, setCode = null, collectorNumber = 
         };
       } else {
         // Single-faced card
-        const imageUrl = card.image_uris?.large || card.card_faces?.[0]?.image_uris?.large;
-        return {
-          name: card.name,
-          imageUrl: imageUrl,
-          set: card.set_name,
-          collectorNumber: card.collector_number,
+      const imageUrl = card.image_uris?.large || card.card_faces?.[0]?.image_uris?.large;
+      return {
+        name: card.name,
+        imageUrl: imageUrl,
+        set: card.set_name,
+        collectorNumber: card.collector_number,
           prints_search_uri: card.prints_search_uri,
           isDoubleFaced: false
-        };
+      };
       }
     }
     throw new Error(`Card not found: ${cardName}`);
