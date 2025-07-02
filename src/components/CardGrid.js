@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './CardGrid.css';
 
 const CARD_WIDTH = 220; // px
@@ -6,6 +6,18 @@ const CARD_WIDTH = 220; // px
 const CardGrid = ({ cards, loading, onSelectPrinting, onPrint, printing, onAddOne }) => {
   const [imgErrors, setImgErrors] = useState([]);
   const [activeCardIndex, setActiveCardIndex] = useState(null);
+
+  // Dismiss overlay if clicking outside any card
+  useEffect(() => {
+    if (activeCardIndex === null) return;
+    const handleClick = (e) => {
+      if (!e.target.closest('.card-item-wrapper')) {
+        setActiveCardIndex(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [activeCardIndex]);
 
   if (loading) {
     return (
@@ -35,18 +47,6 @@ const CardGrid = ({ cards, loading, onSelectPrinting, onPrint, printing, onAddOn
       return updated;
     });
   };
-
-  // Dismiss overlay if clicking outside any card
-  React.useEffect(() => {
-    if (activeCardIndex === null) return;
-    const handleClick = (e) => {
-      if (!e.target.closest('.card-item-wrapper')) {
-        setActiveCardIndex(null);
-      }
-    };
-    document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
-  }, [activeCardIndex]);
 
   return (
     <div className="card-grid-container mt-6">
