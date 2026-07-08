@@ -9,6 +9,21 @@ const embedPublicPng = async (pdfDoc, publicPath) => {
   return pdfDoc.embedPng(bytes);
 };
 
+const fetchImageBytes = async (imageUrl) => {
+  const isBrowser = typeof window !== 'undefined';
+  const response = await fetch(
+    imageUrl,
+    isBrowser
+      ? { cache: 'no-store' }
+      : { headers: { 'User-Agent': 'MTGtoPDF/1.0 (https://mtgtopdf.com)' } }
+  );
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}`);
+  }
+  const arrayBuffer = await response.arrayBuffer();
+  return new Uint8Array(arrayBuffer);
+};
+
 // Standard Magic card dimensions: 2.5" x 3.5" = 750 x 1050 pixels at 300 DPI
 const CARD_WIDTH_INCHES = 2.5;
 const CARD_HEIGHT_INCHES = 3.5;
@@ -122,10 +137,9 @@ const generatePDF = async (cards, paper = { width: 8.5, height: 11.0, unit: 'in'
   // Pre-fetch all images as Uint8Array
   const imageBytesArr = await Promise.all(
     cards.map(async (card) => {
+      if (!card.imageUrl) return null;
       try {
-        const response = await fetch(card.imageUrl);
-        const arrayBuffer = await response.arrayBuffer();
-        return new Uint8Array(arrayBuffer);
+        return await fetchImageBytes(card.imageUrl);
       } catch (error) {
         return null;
       }

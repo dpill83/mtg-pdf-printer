@@ -64,6 +64,7 @@ const CardGrid = ({ cards, loading, onSelectPrinting, onLoadPrintings, onPrint, 
                   src={card.imageUrl}
                   alt={card.name}
                   className="card-image"
+                  crossOrigin="anonymous"
                   onError={(e) => {
                     handleImgError(index);
                   }}
