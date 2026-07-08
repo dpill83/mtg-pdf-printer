@@ -7,6 +7,10 @@ const CardGrid = ({ cards, loading, onSelectPrinting, onLoadPrintings, onPrint, 
   const [imgErrors, setImgErrors] = useState([]);
   const [activeCardIndex, setActiveCardIndex] = useState(null);
 
+  useEffect(() => {
+    setImgErrors([]);
+  }, [cards]);
+
   // Dismiss overlay if clicking outside any card
   useEffect(() => {
     if (activeCardIndex === null) return;
@@ -64,7 +68,6 @@ const CardGrid = ({ cards, loading, onSelectPrinting, onLoadPrintings, onPrint, 
                   src={card.imageUrl}
                   alt={card.name}
                   className="card-image"
-                  crossOrigin="anonymous"
                   onError={(e) => {
                     handleImgError(index);
                   }}
