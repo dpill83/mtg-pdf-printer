@@ -3,6 +3,8 @@ import DeckInput from './components/DeckInput';
 import CardGrid from './components/CardGrid';
 import PrintOptions from './components/PrintOptions';
 import { parseDecklist, fetchMultipleCards, fetchAllPrintings } from './utils/scryfall';
+import { Analytics } from '@vercel/analytics/react';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 import './App.css';
 
 function App() {
@@ -64,7 +66,8 @@ function App() {
 
       // For each card, fetch all printings and set up the card object
       setLoadingProgress({ current: 0, total: results.length, message: 'Loading card printings...' });
-      const cardsWithPrintings = await Promise.all(results.map(async (card, idx) => {
+      const cardsWithPrintings = [];
+      for (const [idx, card] of results.entries()) {
         // Update progress for printings phase
         setLoadingProgress({
           current: idx + 1,
@@ -97,8 +100,8 @@ function App() {
           })),
           selectedPrintingId: selectedPrinting ? selectedPrinting.id : null,
         };
-        return cardWithPrintings;
-      }));
+        cardsWithPrintings.push(cardWithPrintings);
+      }
 
       // Use direct Scryfall URLs
       const finalCards = cardsWithPrintings.map(card => {
@@ -527,6 +530,8 @@ function App() {
           </div>
         </footer>
       </div>
+      <Analytics />
+      <SpeedInsights />
     </div>
   );
 }

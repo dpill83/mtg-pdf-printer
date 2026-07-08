@@ -1,5 +1,45 @@
 import axios from 'axios';
 
+const SCRYFALL_MIN_REQUEST_INTERVAL_MS = 100;
+const SCRYFALL_RETRY_DELAY_MS = 250;
+let lastScryfallRequestAt = 0;
+
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+const shouldRetryScryfallRequest = (error) => {
+  if (!error) {
+    return false;
+  }
+
+  if (error.response?.status === 429) {
+    return true;
+  }
+
+  return !error.response;
+};
+
+const getScryfall = async (url, config = {}, retries = 1) => {
+  const now = Date.now();
+  const waitTime = Math.max(0, SCRYFALL_MIN_REQUEST_INTERVAL_MS - (now - lastScryfallRequestAt));
+
+  if (waitTime > 0) {
+    await sleep(waitTime);
+  }
+
+  lastScryfallRequestAt = Date.now();
+
+  try {
+    return await axios.get(url, config);
+  } catch (error) {
+    if (retries > 0 && shouldRetryScryfallRequest(error)) {
+      await sleep(SCRYFALL_RETRY_DELAY_MS);
+      return getScryfall(url, config, retries - 1);
+    }
+
+    throw error;
+  }
+};
+
 // Parse decklist text into card objects
 export const parseDecklist = (decklistText) => {
   const lines = decklistText.trim().split('\n');
@@ -10,7 +50,7 @@ export const parseDecklist = (decklistText) => {
     if (!trimmedLine) continue;
 
     // Match patterns like "1x Lightning Bolt (2XM) 123" or "1 Lightning Bolt"
-    const match = trimmedLine.match(/^(\d+)(?:x\s*)?(.+?)(?:\s*\(([^)]+)\))?(?:\s+([A-Za-z0-9]+))?$/);
+    const match = trimmedLine.match(/^(\d+)(?:x\s*)?\s+(.+?)(?:\s+\(([^)]+)\)(?:\s+([A-Za-z0-9-]+))?)?\s*$/);
     if (match) {
       const [, quantity, cardName, setCode, collectorNumber] = match;
       cards.push({
@@ -46,7 +86,7 @@ export const fetchCardData = async (cardName, setCode = null, collectorNumber = 
     } else if (setCode) {
       query += ` set:${setCode}`;
     }
-    const response = await axios.get(`https://api.scryfall.com/cards/search`, {
+    const response = await getScryfall(`https://api.scryfall.com/cards/search`, {
       params: {
         q: query,
         unique: 'prints',
@@ -99,7 +139,7 @@ export const fetchAllPrintings = async (prints_search_uri) => {
     const printings = [];
     let nextPage = prints_search_uri;
     while (nextPage) {
-      const response = await axios.get(nextPage);
+      const response = await getScryfall(nextPage);
       if (response.data.data && response.data.data.length > 0) {
         printings.push(...response.data.data);
       }
