@@ -3,8 +3,7 @@ import DeckInput from './components/DeckInput';
 import CardGrid from './components/CardGrid';
 import PrintOptions from './components/PrintOptions';
 import { parseDecklist, fetchMultipleCards, fetchAllPrintings } from './utils/scryfall';
-import { Analytics } from '@vercel/analytics/react';
-import { SpeedInsights } from '@vercel/speed-insights/react';
+import { generatePDF, downloadPDF } from './utils/pdfGenerator';
 import './App.css';
 
 function App() {
@@ -218,33 +217,16 @@ function App() {
     setErrors([]);
     try {
       const paper = paperSizes.find(p => p.value === paperSize) || paperSizes[0];
-      const response = await fetch('/api/generate-pdf', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          cards,
-          paper,
-          scale: Number(scale),
-          options: {
-            cropMarks,
-            cutLines,
-            blackCorners,
-            skipBasicLands,
-            printDecklist,
-            playtestWatermark
-          }
-        })
+      const pdfBytes = await generatePDF(cards, paper, Number(scale), {
+        cropMarks,
+        cutLines,
+        blackCorners,
+        skipBasicLands,
+        printDecklist,
+        playtestWatermark
       });
-      if (!response.ok) throw new Error('Failed to generate PDF');
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = 'mtg-deck.pdf';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+      const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+      downloadPDF(blob, 'mtg-deck.pdf');
     } catch (error) {
       setErrors([`Error generating PDF: ${error.message}`]);
     } finally {
@@ -530,8 +512,6 @@ function App() {
           </div>
         </footer>
       </div>
-      <Analytics />
-      <SpeedInsights />
     </div>
   );
 }

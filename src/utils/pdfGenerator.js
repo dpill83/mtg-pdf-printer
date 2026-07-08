@@ -1,19 +1,13 @@
-// Use CommonJS require for server-side compatibility
-const { PDFDocument, rgb, StandardFonts } = require('pdf-lib');
-const fs = require('fs');
-const path = require('path');
+import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 
-// Polyfill fetch for Node.js environment
-if (typeof fetch === 'undefined') {
-  const nodeFetch = require('node-fetch');
-  global.fetch = nodeFetch;
-}
-
-// MTGPrint default settings for Letter paper (8.5" x 11") at 300 DPI
-// Letter page: 8.5" x 11" = 2550 x 3300 pixels at 300 DPI
-const LETTER_WIDTH_INCHES = 8.5;
-const LETTER_HEIGHT_INCHES = 11.0;
-const DPI = 300;
+// Load a PNG from the public/ folder over HTTP and embed it in the document.
+// Replaces the previous server-side fs.readFileSync approach.
+const embedPublicPng = async (pdfDoc, publicPath) => {
+  const response = await fetch(publicPath);
+  if (!response.ok) throw new Error(`Failed to load ${publicPath}`);
+  const bytes = new Uint8Array(await response.arrayBuffer());
+  return pdfDoc.embedPng(bytes);
+};
 
 // Standard Magic card dimensions: 2.5" x 3.5" = 750 x 1050 pixels at 300 DPI
 const CARD_WIDTH_INCHES = 2.5;
@@ -21,10 +15,6 @@ const CARD_HEIGHT_INCHES = 3.5;
 
 // Convert to points (1 inch = 72 points)
 const POINTS_PER_INCH = 72;
-
-// Page dimensions in points
-const PAGE_WIDTH_POINTS = LETTER_WIDTH_INCHES * POINTS_PER_INCH;  // 612pt
-const PAGE_HEIGHT_POINTS = LETTER_HEIGHT_INCHES * POINTS_PER_INCH; // 792pt
 
 // Card dimensions in points
 const CARD_WIDTH_POINTS = CARD_WIDTH_INCHES * POINTS_PER_INCH;  // 180pt
@@ -112,11 +102,7 @@ const generatePDF = async (cards, paper = { width: 8.5, height: 11.0, unit: 'in'
       ];
       
       triangleImages = await Promise.all(
-        triangleFiles.map(async (filename) => {
-          const filePath = path.join(__dirname, '..', '..', 'public', filename);
-          const fileBuffer = fs.readFileSync(filePath);
-          return await pdfDoc.embedPng(fileBuffer);
-        })
+        triangleFiles.map((filename) => embedPublicPng(pdfDoc, `/${filename}`))
       );
     } catch (error) {
       triangleImages = null;
@@ -127,9 +113,7 @@ const generatePDF = async (cards, paper = { width: 8.5, height: 11.0, unit: 'in'
   let playtestWatermarkImage = null;
   if (options.playtestWatermark) {
     try {
-      const watermarkPath = path.join(__dirname, '..', '..', 'public', 'playtest_watermark.png');
-      const watermarkBytes = fs.readFileSync(watermarkPath);
-      playtestWatermarkImage = await pdfDoc.embedPng(watermarkBytes);
+      playtestWatermarkImage = await embedPublicPng(pdfDoc, '/playtest_watermark.png');
     } catch (error) {
       playtestWatermarkImage = null;
     }
@@ -381,6 +365,7 @@ const generatePDF = async (cards, paper = { width: 8.5, height: 11.0, unit: 'in'
     y -= lineHeight * 2;
     const sanitize = (str) => {
       // Replace characters outside basic Latin and Latin-1 Supplement with '?'
+      // eslint-disable-next-line no-control-regex
       return str.replace(/[^\x00-\xFF]/g, '?');
     };
     cards.forEach(card => {
@@ -412,7 +397,7 @@ const generatePDF = async (cards, paper = { width: 8.5, height: 11.0, unit: 'in'
   }
 
   const pdfBytes = await pdfDoc.save();
-  return pdfBytes; // Return bytes instead of Blob for server-side compatibility
+  return pdfBytes;
 };
 
 const downloadPDF = (pdfBlob, filename = 'mtg-deck.pdf') => {
@@ -426,11 +411,4 @@ const downloadPDF = (pdfBlob, filename = 'mtg-deck.pdf') => {
   URL.revokeObjectURL(url);
 };
 
-// CommonJS exports for server-side usage
-module.exports = { generatePDF, downloadPDF };
-
-// ES6 exports for client-side usage (if needed)
-if (typeof exports !== 'undefined') {
-  exports.generatePDF = generatePDF;
-  exports.downloadPDF = downloadPDF;
-} 
+export { generatePDF, downloadPDF };

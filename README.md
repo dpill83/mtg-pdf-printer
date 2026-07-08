@@ -101,10 +101,8 @@ src/
 ### Available Scripts
 
 - `npm start`: Start React development server
-- `npm run dev`: Start React development server (alias for npm start)
-- `npm build`: Build for production
-
-- `npm eject`: Eject from Create React App
+- `npm run build`: Build for production
+- `npm run eject`: Eject from Create React App
 
 ## Browser Compatibility
 
@@ -124,7 +122,14 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## Local Development
 
-To run locally, use `vercel dev` for full-stack (React frontend + API routes), or `npm start` for frontend-only.
+Run `npm start` for the full app. PDF generation runs entirely client-side (via pdf-lib), so no backend or API server is required.
 
-- `vercel dev`: Runs both the React frontend and serverless API routes (e.g., /api/generate-pdf) locally. This is required for full functionality.
-- `npm start`: Runs only the React frontend. API routes will not be available locally. 
+## Deployment
+
+Hosted on Cloudflare Pages as a static site:
+
+- **Build command:** `npm run build`
+- **Build output directory:** `build`
+- **Node version:** `20`
+
+SPA routing is handled by [public/_redirects](public/_redirects). Cloudflare sets `CI=true` during builds, which makes Create React App treat ESLint warnings as errors, so keep the build warning-free.
