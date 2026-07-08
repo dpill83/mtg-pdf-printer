@@ -54,7 +54,7 @@ function App() {
         return;
       }
 
-      // Fetch card data from Scryfall with progress tracking
+      // Fetch card data from Scryfall (collection API — few requests, not one per card)
       setLoadingProgress({ current: 0, total: parsedCards.length, message: 'Starting to load cards...' });
       const { results, errors: fetchErrors } = await fetchMultipleCards(parsedCards, setLoadingProgress);
       if (results.length === 0) {
@@ -63,61 +63,26 @@ function App() {
         return;
       }
 
-      // For each card, fetch all printings and set up the card object
-      setLoadingProgress({ current: 0, total: results.length, message: 'Loading card printings...' });
-      const cardsWithPrintings = [];
-      for (const [idx, card] of results.entries()) {
-        // Update progress for printings phase
-        setLoadingProgress({
-          current: idx + 1,
-          total: results.length,
-          message: `Loading printings for ${card.name}...`
-        });
-        
-        let printings = [];
-        try {
-          if (card.prints_search_uri) {
-            printings = await fetchAllPrintings(card.prints_search_uri);
-          }
-        } catch (e) {
-          printings = [];
-        }
-        // Default to the originally loaded card
-        const selectedPrinting = printings.find(p => p.set_name === card.set && p.collector_number === card.collectorNumber) || printings[0];
-        const cardWithPrintings = {
-          ...card,
-          printings: printings.map(p => ({
-            id: p.id,
-            set_name: p.set_name,
-            collector_number: p.collector_number,
-            released_at: p.released_at,
-            imageUrl: p.imageUrl,
-            backImageUrl: p.backImageUrl,
-            isDoubleFaced: p.isDoubleFaced,
-            frontName: p.frontName,
-            backName: p.backName,
-          })),
-          selectedPrintingId: selectedPrinting ? selectedPrinting.id : null,
+      // Seed each card with its current printing only.
+      // Full printing lists load on demand when the user opens the version dropdown.
+      const finalCards = results.map((card) => {
+        const currentPrinting = {
+          id: card.id,
+          set: card.setCode,
+          set_name: card.set,
+          collector_number: card.collectorNumber,
+          released_at: null,
+          imageUrl: card.imageUrl,
+          backImageUrl: card.backImageUrl,
+          isDoubleFaced: card.isDoubleFaced,
+          frontName: card.frontName,
+          backName: card.backName,
         };
-        cardsWithPrintings.push(cardWithPrintings);
-      }
-
-      // Use direct Scryfall URLs
-      const finalCards = cardsWithPrintings.map(card => {
-        const selected = card.printings.find(p => p.id === card.selectedPrintingId) || card.printings[0];
-        const imageUrl = selected && selected.imageUrl ? selected.imageUrl : card.imageUrl;
-        const backImageUrl = selected && selected.backImageUrl ? selected.backImageUrl : card.backImageUrl;
-        const isDoubleFaced = selected ? selected.isDoubleFaced : card.isDoubleFaced;
-        const frontName = selected ? selected.frontName : card.frontName;
-        const backName = selected ? selected.backName : card.backName;
-        
         return {
           ...card,
-          imageUrl: imageUrl,
-          backImageUrl: backImageUrl,
-          isDoubleFaced: isDoubleFaced,
-          frontName: frontName,
-          backName: backName,
+          printings: [currentPrinting],
+          printingsLoaded: false,
+          selectedPrintingId: card.id,
         };
       });
 
@@ -127,8 +92,8 @@ function App() {
       const canonicalDecklist = finalCards.map(card => {
         const qty = card.quantity || 1;
         const name = card.name;
-        const setCode = card.setCode || card.set || (card.printings && card.printings[0]?.set) || '';
-        const collectorNumber = card.collectorNumber || (card.printings && card.printings[0]?.collector_number) || '';
+        const setCode = card.setCode || '';
+        const collectorNumber = card.collectorNumber || '';
         let line = `${qty}x ${name}`;
         if (setCode && collectorNumber) {
           line += ` (${setCode}) ${collectorNumber}`;
@@ -152,6 +117,34 @@ function App() {
     }
   };
 
+  // Lazy-load all printings when the user opens a card's version dropdown
+  const handleLoadPrintings = async (cardIdx) => {
+    const card = cards[cardIdx];
+    if (!card || card.printingsLoaded || !card.prints_search_uri) {
+      return;
+    }
+
+    try {
+      const printings = await fetchAllPrintings(card.prints_search_uri);
+      setCards((prevCards) =>
+        prevCards.map((c, idx) => {
+          if (idx !== cardIdx) return c;
+          return {
+            ...c,
+            printings: printings.length > 0 ? printings : c.printings,
+            printingsLoaded: true,
+          };
+        })
+      );
+    } catch (error) {
+      setCards((prevCards) =>
+        prevCards.map((c, idx) =>
+          idx === cardIdx ? { ...c, printingsLoaded: true } : c
+        )
+      );
+    }
+  };
+
   // Handler for when a user selects a different printing
   const handleSelectPrinting = (cardIdx, printingId) => {
     setCards(prevCards => prevCards.map((card, idx) => {
@@ -171,6 +164,8 @@ function App() {
         isDoubleFaced: isDoubleFaced,
         frontName: frontName,
         backName: backName,
+        setCode: selected.set || card.setCode,
+        collectorNumber: selected.collector_number || card.collectorNumber,
       };
     }));
     // Update decklistText to match the new printings
@@ -186,7 +181,7 @@ function App() {
           isDoubleFaced: selected ? selected.isDoubleFaced : card.isDoubleFaced,
           frontName: selected ? selected.frontName : card.frontName,
           backName: selected ? selected.backName : card.backName,
-          setCode: selected.set,
+          setCode: selected.set || card.setCode,
           collectorNumber: selected.collector_number,
         };
       });
@@ -501,7 +496,16 @@ function App() {
           <div className="card">
             <div className="preview-section">
               <h2>Card Preview (3x3 Grid)</h2>
-              <CardGrid cards={cards} loading={loading} onSelectPrinting={handleSelectPrinting} onPrint={handleGeneratePDF} printing={generatingPDF} onAddOne={handleAddOne} onRemoveOne={handleRemoveOne} />
+              <CardGrid
+                cards={cards}
+                loading={loading}
+                onSelectPrinting={handleSelectPrinting}
+                onLoadPrintings={handleLoadPrintings}
+                onPrint={handleGeneratePDF}
+                printing={generatingPDF}
+                onAddOne={handleAddOne}
+                onRemoveOne={handleRemoveOne}
+              />
             </div>
           </div>
         )}

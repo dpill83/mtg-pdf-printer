@@ -3,7 +3,7 @@ import './CardGrid.css';
 
 const CARD_WIDTH = 220; // px
 
-const CardGrid = ({ cards, loading, onSelectPrinting, onPrint, printing, onAddOne, onRemoveOne }) => {
+const CardGrid = ({ cards, loading, onSelectPrinting, onLoadPrintings, onPrint, printing, onAddOne, onRemoveOne }) => {
   const [imgErrors, setImgErrors] = useState([]);
   const [activeCardIndex, setActiveCardIndex] = useState(null);
 
@@ -105,6 +105,8 @@ const CardGrid = ({ cards, loading, onSelectPrinting, onPrint, printing, onAddOn
               {card.printings && card.printings.length > 0 && (
                 <select
                   value={card.selectedPrintingId || card.printings[0].id}
+                  onFocus={() => onLoadPrintings && onLoadPrintings(index)}
+                  onMouseDown={() => onLoadPrintings && onLoadPrintings(index)}
                   onChange={e => onSelectPrinting(index, e.target.value)}
                   className="card-version-dropdown"
                 >
